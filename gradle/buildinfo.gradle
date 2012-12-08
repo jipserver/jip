@@ -1,0 +1,26 @@
+// collect build info
+boolean isWindows = false
+if (System.properties['os.name'].toLowerCase().contains('windows')) {
+    isWindows = true
+}
+
+private String exec ( String command, File directory = null, boolean isWindows = false )
+{
+    if (isWindows){
+        command = "CMD.EXE /c ${command}"
+    }
+    final process = command.execute(( List ) null, directory )
+    ( process.text + process.err.text ).trim()
+}
+private String find ( String prefix, String command, boolean isWindows ) { find( prefix, exec( command, null, isWindows).readLines()) }
+private String find ( String prefix, List<String> l ) { l.find{ it.startsWith( prefix ) }?.replace( prefix, '' )?.trim() ?: '' }
+
+def gitBranch = "${ find( '# On branch', 'git status', isWindows ) }"
+def gitVersion = "${ find( 'commit',      'git log -1', isWindows )}"
+def buildDate  = "${new Date().toString()}"
+
+//subprojects.each{project->	
+    project(":").ext.gitBranch = "${gitBranch}"
+    project(":").ext.gitVersion = "${gitVersion}"
+    project(":").ext.buildDate = "${buildDate}"
+//}

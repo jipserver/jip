@@ -1,4 +1,5 @@
-JIP-Runner
+JIP Pipeline System
 =================
 
-This is the execution module of JIP
+JIP is a pipeline system written in Java and  groovy that supports creating
+integrated pipelines and run them either locally or on a compute cluster.

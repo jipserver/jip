@@ -1,2 +1,3 @@
 include 'jip-graph'
 include 'jip-plugin-system'
+include 'jip-client'

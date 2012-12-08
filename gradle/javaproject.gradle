@@ -3,11 +3,13 @@ task sourcesJar(type: Jar, dependsOn:classes) {
     classifier = 'sources'
     from sourceSets.main.allSource
 }
+
 // custom tasks for creating javadoc jar
 task javadocJar(type: Jar, dependsOn:"javadoc") {
     classifier = 'javadoc'
     from javadoc.destinationDir
 }
+
 // custom tasks for creating test jar
 task testJar(type: Jar) {
     classifier = 'tests'
@@ -23,8 +25,8 @@ task writeBuildProperties(){
 
     ext.props = [:]
     props["library.version"] = project(":").version
-    props["build.version"] = gitVersion
-    props["build.branch"] = gitBranch
+    props["build.version"] = project(":").gitVersion
+    props["build.branch"] = project(":").gitBranch
     inputs.properties(props)
 
     doLast{
@@ -47,10 +49,7 @@ tasks.classes.dependsOn tasks.writeBuildProperties
 task(versionInfo) << {
     description "Print version info"
     println "${project.name} Version info"
-    println "Flux Lib:\t${version}"
-    if(project(":").applications[project.name]){
-        println "Flux App:\t${project(':').applications[project.name]}"
-    }
+    println "Version:\t${version}"
     println "Build Date:\t${buildDate}"
     println "Build Version:\t${gitVersion}"
     println "Build Branch:\t${gitBranch}"
@@ -69,4 +68,16 @@ artifacts {
     archives sourcesJar
     archives javadocJar
 //    archives testJar
+}
+
+test{
+    jvmArgs '-Xms128m', '-Xmx1G'
+    //makes the standard streams (err and out) visible at console when running tests
+    //testLogging.showStandardStreams = true
+
+    //listening to test execution events
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+        ignoreFailures = true
+    }
 }

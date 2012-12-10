@@ -10,6 +10,7 @@ import jip.commands.JipCommand;
 import jip.commands.JipCommandService;
 import jip.plugin.PluginBootstrapper;
 import jip.plugin.PluginRegistry;
+import jip.utils.SimpleTablePrinter;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
@@ -83,11 +84,13 @@ public class Jip {
             StringBuilder helpBuilder = new StringBuilder("JIP command line tools can be used to interact with jip.\n" +
                     "The following commands are supported:\n");
             helpBuilder.append("\n");
+            SimpleTablePrinter table = new SimpleTablePrinter(Arrays.asList("Command", "Description"));
             for (JipCommand jipCommand : commandService.getCommands()) {
                 String shortDescription = jipCommand.getShortDescription();
                 if(shortDescription == null) shortDescription = "";
-                helpBuilder.append(jipCommand.getCommandName()).append("\t\t\t").append(shortDescription).append("\n");
+                table.addRow(jipCommand.getCommandName(), shortDescription);
             }
+            helpBuilder.append(table);
             jsap.setHelp(helpBuilder.toString());
         } catch (JSAPException e) {
             throw new RuntimeException(e);

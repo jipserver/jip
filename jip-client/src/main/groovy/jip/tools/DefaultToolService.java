@@ -3,15 +3,21 @@ package jip.tools;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import groovy.lang.Closure;
+import jip.dsl.JipDSL;
 import jip.dsl.JipDSLContext;
 import jip.tools.DefaultTools;
 import jip.plugin.PluginRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.util.*;
 
 /**
+ *
+ * Default tool service implementation
+ *
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
 @Singleton
@@ -76,6 +82,46 @@ public class DefaultToolService implements ToolService {
             }
         }
 
+        // search from folders
+        // 1. $JIP_HOME/tools/*/jip-tool.groovy
+        // 2. $JIP_HOME/tools/*.groovy
+        // 4. $USER_HOME/tools/*/jip-tool.groovy
+        // 5. $USER_HOME/tools/*.groovy
+        String jipHome = System.getProperty("jip.home");
+        String userHome = System.getProperty("user.home") + "/.jip";
+        JipDSL dsl = new JipDSL(toolContext);
+        if(jipHome != null){
+            collectTools(dsl, new File(jipHome, "tools"));
+        }
+        if(userHome != null){
+            collectTools(dsl, new File(userHome, "tools"));
+        }
+    }
+
+    /**
+     * Collect tools from the given base directory
+     *
+     * @param dsl dsl used to evaluate tools
+     * @param baseDir the base directory
+     */
+    protected void collectTools(JipDSL dsl, File baseDir) {
+        if(baseDir == null || !baseDir.exists() || !baseDir.isFile()) return;
+        log.info("Collecting tools from {}", baseDir.getAbsolutePath());
+        File[] files = baseDir.listFiles();
+        if(files == null) return;
+        for (File file : files) {
+            if(file.getName().endsWith(".groovy")){
+                log.info("Loading tools from {}", file.getAbsolutePath());
+                dsl.evaluateToolDefinition(file, Collections.emptyMap());
+                if(file.isDirectory()){
+                    File jiptoolsFile = new File(file, "jip-tool.groovy");
+                    if(jiptoolsFile.exists()){
+                        log.info("Loading tools from {}", jiptoolsFile.getAbsolutePath());
+                        dsl.evaluateToolDefinition(jiptoolsFile, Collections.emptyMap());
+                    }
+                }
+            }
+        }
     }
 
     @Override

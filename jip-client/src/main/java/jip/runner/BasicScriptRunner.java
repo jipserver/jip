@@ -84,6 +84,11 @@ public class BasicScriptRunner {
      */
     private String[] interpreterOptions;
 
+    /**
+     * the working directory
+     */
+    private String workingDir;
+
 
 
     /**
@@ -107,8 +112,33 @@ public class BasicScriptRunner {
                              Map<String, String> environment,
                              OutputStream stdout,
                              OutputStream stderr) {
+        this(name, interpreter, interpreterOptions, script, arguments, environment, stdout, stderr, null);
+    }
 
-        if(name == null) throw new NullPointerException("NULL name not permitted");
+    /**
+     * Create a new runner that will execute the given script using the interpreter
+     * in the specified environment. If arguments are specified, the are passt on to the
+     * script.
+     *
+     * @param name name of this run
+     * @param interpreter interpreter the interpreter to run the script
+     * @param script the script
+     * @param arguments the arguments passed to the script
+     * @param environment the script environment
+     * @param stdout the runs standard output
+     * @param stderr the runs standard error
+     */
+    public BasicScriptRunner(String name,
+                             Interpreter interpreter,
+                             String[] interpreterOptions,
+                             String script,
+                             String[] arguments,
+                             Map<String, String> environment,
+                             OutputStream stdout,
+                             OutputStream stderr,
+                             String workingDir) {
+
+        if(name == null) name = "Script";
         if(interpreter == null) throw new NullPointerException("NULL interpreter not permitted");
         if(script == null) throw new NullPointerException("NULL script not permitted");
         this.name = name;
@@ -119,6 +149,7 @@ public class BasicScriptRunner {
         this.environment = environment;
         this.stdout = stdout;
         this.stderr = stderr;
+        this.workingDir = workingDir;
     }
 
     /**
@@ -157,21 +188,25 @@ public class BasicScriptRunner {
                 parameter.addAll(Arrays.asList(arguments));
             }
 
-            logger.info("[{}] : Starting run -> {}", name, Joiner.on(" ").join(parameter));
+            logger.debug("[{}] : Starting run -> {}", name, Joiner.on(" ").join(parameter));
             ProcessBuilder pb = new ProcessBuilder(parameter);
             if(environment != null){
                 Map<String, String> pbe = pb.environment();
                 if(environment.containsKey("CWD")) {
                     File cwd = new File(environment.get("CWD"));
                     pb.directory(cwd);
-                    logger.info("[{}] : Set working directory {}", name, cwd.getAbsolutePath());
+                    logger.debug("[{}] : Set working directory {}", name, cwd.getAbsolutePath());
                 }
-//                for (Map.Entry<String, String> ee : environment.entrySet()) {
-//                    if(ee.getValue() != null){
-//                        pbe.put(ee.getKey(), ee.getValue().toString());
-//                    }
-//                    logger.debug("[{}] : Environment {}->{}", new String[]{name, ee.getKey(), ee.getValue()});
-//                }
+                for (Map.Entry<String, String> ee : environment.entrySet()) {
+                    if(ee.getValue() != null){
+                        pbe.put(ee.getKey(), ee.getValue().toString());
+                    }
+                    logger.debug("[{}] : Environment {}->{}", new String[]{name, ee.getKey(), ee.getValue()});
+                }
+            }
+
+            if(workingDir != null){
+                pb.directory(new File(workingDir));
             }
             long startTime = System.currentTimeMillis();
             Process process = pb.start();
@@ -223,12 +258,14 @@ public class BasicScriptRunner {
         private final BufferedReader stream;
         private final BufferedOutputStream output;
         private final boolean errorStream;
+        private final boolean isSystemOut;
 
         public ProcessStreamReader(InputStream stream, OutputStream output, boolean isErrorStream) {
             this.stream = new BufferedReader(new InputStreamReader(stream));
             this.output = output == null ? null : new BufferedOutputStream(output);
             errorStream = isErrorStream;
             this.originalOutput = output;
+            this.isSystemOut = originalOutput == System.err || originalOutput == System.out;
         }
 
         @Override
@@ -237,19 +274,21 @@ public class BasicScriptRunner {
             try {
                 boolean first = true;
                 while ((line = stream.readLine()) != null){
-                    if(errorStream){
-                        logger.error("[{}] : {}", name, line);
-                    }else{
-                        logger.info("[{}] : {}", name, line);
+                    if(!isSystemOut){
+                        if(errorStream){
+                            logger.error("[{}] : {}", name, line);
+                        }else{
+                            logger.info("[{}] : {}", name, line);
+                        }
                     }
                     if(output != null){
                         if(first){
                             first = false;
                         }else{
                             output.write('\n');
+                            output.flush();
                         }
                         output.write(line.getBytes());
-
                     }
                 }
             } catch (Exception e) {

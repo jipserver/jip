@@ -1,5 +1,6 @@
 package jip.dsl
 
+import jip.JipEnvironment
 import jip.tools.Tool
 import jip.runner.BasicScriptRunner
 import jip.tools.Parameter
@@ -46,6 +47,14 @@ class DefaultTool implements Tool{
      * Interpreter arguments template
      */
     private String args
+    /**
+     * The installer for this tool
+     */
+    private def installer
+    /**
+     * The jip runtime
+     */
+    private JipEnvironment runtime
 
 
     @Override
@@ -59,8 +68,15 @@ class DefaultTool implements Tool{
     }
 
     @Override
+    List<String> getInstaller() {
+        return installer
+    }
+
+    @Override
     void run(Map cfg) throws Exception{
+        def execUtils = runtime.getExecuteUtilities(new File(""), getInstaller())
         if(exec instanceof Closure){
+            exec.delegate = execUtils
             exec.call(cfg)
         }else{
             String script = createScript(cfg)
@@ -68,19 +84,9 @@ class DefaultTool implements Tool{
             if (args){
                 commandArgs = fillTemplate(args, cfg).split("\\s+")
             }
-            int r = new BasicScriptRunner(
-                    name,
-                    this.interpreter,
-                    null,
-                    script,
-                    commandArgs,
-                    cfg,
-                    System.out,
-                    System.err
-            ).run()
-
-
-
+            execUtils.run(this.interpreter, script, {
+                arguments(commandArgs)
+            })
         }
     }
     /**

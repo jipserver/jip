@@ -71,9 +71,9 @@ public class PluginRegistryImpl implements PluginRegistry {
     public void initialize(){
         Reflections reflections = ReflectionUtils.get();
         extensionPoints = reflections.getTypesAnnotatedWith(ExtensionPoint.class, true);
-        log.info("Plugin registry : found " + extensionPoints.size() + " extension points");
+        log.debug("Plugin registry : found " + extensionPoints.size() + " extension points");
         Set<Class<?>> extensions = reflections.getTypesAnnotatedWith(Extension.class, true);
-        log.info("Plugin registry : found " + extensions.size() + " extensions");
+        log.debug("Plugin registry : found " + extensions.size() + " extensions");
         this.extensions = ArrayListMultimap.create();
         // map extensions to extension points
 
@@ -89,7 +89,7 @@ public class PluginRegistryImpl implements PluginRegistry {
                 log.warn("No extension point found for " + extension.getName());
             }
         }
-        log.info("Plugin registry : " + this.extensions.size() + " extensions registered");
+        log.debug("Plugin registry : " + this.extensions.size() + " extensions registered");
     }
 
     /**

@@ -8,8 +8,11 @@ import jip.JSAPHelper;
 import jip.JipModule;
 import jip.commands.JipCommand;
 import jip.commands.JipCommandService;
+import jip.dsl.ExecuteUtils;
 import jip.plugin.PluginBootstrapper;
 import jip.plugin.PluginRegistry;
+import jip.runner.JipExecutor;
+import jip.tools.ToolService;
 import jip.utils.SimpleTablePrinter;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -22,19 +25,57 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * JIP Client main class
  *
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
-public class Jip {
+public class Jip implements JipEnvironment{
     /**
      * The logger
      */
     private static Logger log = LoggerFactory.getLogger(Jip.class);
+
+    /**
+     * The tool service
+     */
+    private ToolService toolService;
+
+    /**
+     * Get the JIP directory, wither global or user specific
+     *
+     * @param user user specific directory
+     * @return dir the jip dir
+     */
+    public File getJipHome(boolean user){
+        if(!user){
+            return new File(System.getProperty("jip.home"));
+        }else{
+            return new File(System.getProperty("user.home") + "/.jip");
+        }
+    }
+
+    @Override
+    public JipExecutor getExecuteUtilities(File workingDir, List<String> installer) {
+        if(installer != null && installer.size() >0){
+            Map<String, String> merged = new HashMap<String, String>();
+            for (String name : installer) {
+                for (Map<String, String> map : toolService.getInstallerEnvironments(name)) {
+                    for (String k : map.keySet()) {
+                        if(!merged.containsKey(k)){
+                            merged.put(k, map.get(k));
+                        }else{
+                            merged.put(k, merged.get(k) + ":" + map.get(k));
+                        }
+                    }
+                }
+            }
+            return new ExecuteUtils(workingDir, merged);
+        }
+        return new ExecuteUtils(workingDir, null);
+    }
 
     /**
      * The JIP main methods delegates to run
@@ -60,10 +101,10 @@ public class Jip {
             log.error("Error while initializing logging system : {}", e.getMessage());
         }
 
-        log.info("JIP home: {}", jipHome);
-        log.info("JIP user dir: {}", userHome);
-        log.info("Starting plugin system");
-        PluginBootstrapper pluginBootstrapper = new PluginBootstrapper(properties, new File(userHome, "jip.cfg"), Arrays.<Module>asList(new JipModule()));
+        log.debug("JIP home: {}", jipHome);
+        log.debug("JIP user dir: {}", userHome);
+        log.debug("Starting plugin system");
+        PluginBootstrapper pluginBootstrapper = new PluginBootstrapper(properties, new File(userHome, "jip.cfg"), Arrays.<Module>asList(new JipModule(this)));
         Injector injector = null;
         try {
             injector = pluginBootstrapper.bootstrap(true);
@@ -75,6 +116,7 @@ public class Jip {
 
         final PluginRegistry pluginRegistry = injector.getInstance(PluginRegistry.class);
         JipCommandService commandService = injector.getInstance(JipCommandService.class);
+        this.toolService = injector.getInstance(ToolService.class);
 
         JSAP jsap = new JSAP();
         try {
@@ -152,8 +194,9 @@ public class Jip {
             ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%-5p] [%t] [%d{dd MMM yyyy HH:mm:ss,SSS}] [%c{2}] : %m%n"));
             rootLogger.addAppender(appender);
             rootLogger.setLevel(Level.toLevel(System.getProperty("jip.debug")));
+        }else{
+            rootLogger.addAppender(new ConsoleAppender(new PatternLayout("%m%n")));
         }
-
         SLF4JBridgeHandler.install();
         rootLogger.setLevel(Level.INFO);
     }

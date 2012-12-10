@@ -2,6 +2,7 @@ package jip.tools;
 
 import jip.plugin.ExtensionPoint;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,6 +54,13 @@ public interface Tool {
      * @return output the default output parameter
      */
     String getDefaultOutput();
+
+    /**
+     * Get installer that this tool needs
+     *
+     * @return installer the installer that this tool needs
+     */
+    List<String> getInstaller();
 
 
 

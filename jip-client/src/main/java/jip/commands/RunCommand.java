@@ -100,7 +100,7 @@ public class RunCommand implements JipCommand{
         }
 
         String[] cmdArgs = rest.toArray(new String[rest.size()]);
-        log.info("Preparing tool: {}", toolName);
+        log.debug("Preparing tool: {}", toolName);
         log.debug("Tool arguments : {}", Arrays.toString(cmdArgs));
 
         Map<String, Object> toolConfiguration = new HashMap<String, Object>();

@@ -1,18 +1,24 @@
 package jip.commands;
 
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPResult;
 import jip.JSAPHelper;
+import jip.JipEnvironment;
 import jip.plugin.Extension;
-import jip.tools.Parameter;
+import jip.tools.JipContext;
 import jip.tools.Tool;
 import jip.tools.ToolService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
 
 /**
  * List, show, and install tools
@@ -26,13 +32,18 @@ public class ToolsCommand implements JipCommand{
      */
     private static final Logger log = LoggerFactory.getLogger(ToolsCommand.class);
     /**
+     * The JIP runtime environment
+     */
+    private JipEnvironment runtime;
+    /**
      * The tool service
      */
     private ToolService toolService;
 
 
     @Inject
-    public ToolsCommand(ToolService toolService) {
+    public ToolsCommand(JipEnvironment runtime, ToolService toolService) {
+        this.runtime = runtime;
         this.toolService = toolService;
     }
 
@@ -108,7 +119,35 @@ public class ToolsCommand implements JipCommand{
      * @param installToUser install tool into user space
      */
     protected void installTool(String toolUrl, boolean installToUser) {
-        throw new UnsupportedOperationException("NOT YET IMPLEMENTED");
+        log.info("Trying to install tool from " + toolUrl);
+        if(toolUrl.startsWith("/") || new File(toolUrl).exists()){
+            File sourceFile = new File(toolUrl);
+            File toolsDir = new File(runtime.getJipHome(installToUser), "tools");
+            File target = new File(toolsDir, sourceFile.getName());
+            if(!target.getParentFile().exists()){
+                if(!target.getParentFile().mkdirs()){
+                    log.error("Unable to create tools folder {}", target.getParentFile());
+                    throw new RuntimeException("Unable to create tools folder "+ target.getParentFile());
+                }
+            }
+            log.info("Install tool from {} to {}", toolUrl, target.getAbsolutePath());
+            try {
+                Files.copy(sourceFile, target);
+            } catch (IOException e) {
+                log.error("Error while copying tool file : {}", e.getMessage());
+                throw new RuntimeException("Unable to copy tool file : " + e.getMessage());
+            }
+            JipContext loaded = toolService.loadFrom(target);
+            log.info("Loaded " + loaded.getTools().size() + " Tools");
+            log.info("Loaded " + loaded.getInstaller().size() + " Installer");
+            for (Map.Entry<String, Tool> toolEntry : loaded.getTools().entrySet()) {
+                Tool tool = toolService.getTool(toolEntry.getKey());
+                if(tool.getInstaller() != null && tool.getInstaller().size() > 0){
+                    log.info("Installing dependencies");
+                    toolService.installDependencies(tool.getName(), installToUser);
+                }
+            }
+        }
     }
 
 

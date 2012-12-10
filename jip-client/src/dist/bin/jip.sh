@@ -52,9 +52,17 @@ else
 fi
 
 if [ -z "$JIP_HOME" ]; then
-    JIP_HOME="${dir/../}"
+    JIP_HOME="${dir}/../"
 fi
 
+if [ ! -e $JIP_HOME/bin/pip ]; then
+    echo "Virtual environment configuration not found! Make sure you run jip-boostrap to setup the main environment!"
+    exit 1
+fi
+
+. $JIP_HOME/bin/activate
+
+export PATH=$JIP_HOME/bin:$PATH
 
 java -Xmx$JIP_MEM $MISC \
 -Djip.home=$JIP_HOME \

@@ -24,6 +24,15 @@ ext.distSpec = copySpec {
         rename 'jip.sh',  'jip'
         fileMode = 0755
     }
+    into('scripts') {
+        from("${project(':jip-client').projectDir}/src/dist/scripts")
+        fileMode = 0755
+    }
+    into('sbin') {
+        from("${project(':jip-client').projectDir}/src/dist/sbin")
+        rename 'jip-bootstrap.sh',  'jip-boostrap'
+        fileMode = 0755
+    }
     into('lib') {
         from(jar.outputs.files)
         from(configurations.runtime)

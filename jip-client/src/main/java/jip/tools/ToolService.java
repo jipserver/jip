@@ -1,6 +1,9 @@
 package jip.tools;
 
+import java.io.File;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -32,4 +35,30 @@ public interface ToolService {
      * @throws IllegalArgumentException in case a tool with that name already exists
      */
     void register(Tool tool);
+
+    /**
+     * Load tools and installer from file
+     *
+     * @param file the file
+     * @return context single context with only the loaded to tools and installers
+     */
+    JipContext loadFrom(File file);
+
+    /**
+     * Install all installer dependencies for this tool
+     *
+     * @param toolName the tool name
+     * @param userSpace install into user space
+     */
+    void installDependencies(String toolName, boolean userSpace);
+
+    /**
+     * Returns a list of all available installer environments
+     */
+    List<Map<String,String>> getInstallerEnvironments();
+
+    /**
+     * Returns a list the specified installer environment and all its dependencies
+     */
+    List<Map<String,String>> getInstallerEnvironments(String name);
 }

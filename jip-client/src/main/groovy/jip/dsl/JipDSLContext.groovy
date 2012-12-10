@@ -1,5 +1,8 @@
 package jip.dsl
 
+import com.google.inject.Inject
+import jip.JipEnvironment
+import jip.tools.JipContext
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
 import jip.tools.Installer
@@ -11,7 +14,7 @@ import jip.tools.Tool
  *
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
-class JipDSLContext {
+class JipDSLContext implements JipContext{
     /**
      * The logger
      */
@@ -25,14 +28,18 @@ class JipDSLContext {
      */
     Map<String, Tool> tools = [:]
 
-    def installer(String name){
-        if(installer.containsKey(name)){
-            throw new RuntimeException("Installer ${name} is already defined!")
-        }
-        ToolInstaller implementation = new ToolInstaller(name: name)
-        installer.put(name, implementation)
+    /**
+     * The jip runtime
+     */
+    JipEnvironment jipRuntime
 
-        return implementation
+    @Inject
+    JipDSLContext(JipEnvironment jipRuntime) {
+        this.jipRuntime = jipRuntime
+    }
+
+    def installer(String name){
+        return installer(name, null)
     }
 
     def installer(String name, Closure definition){
@@ -40,18 +47,21 @@ class JipDSLContext {
             throw new RuntimeException("Installer ${name} is already defined!")
         }
         log.info("Adding installer ${name}")
-        ToolInstaller implementation = new ToolInstaller(name: name)
-        definition.delegate = implementation
-        definition.resolveStrategy = Closure.DELEGATE_FIRST
-        definition.call()
+        ToolInstaller implementation = new ToolInstaller(name: name, runtime:jipRuntime)
+        if(definition != null){
+            definition.delegate = implementation
+            definition.resolveStrategy = Closure.DELEGATE_FIRST
+            definition.call()
+        }
         implementation.validate()
         installer.put(name, implementation)
     }
+
     def tool(String name){
         if(tools.containsKey(name)){
             throw new RuntimeException("Tool ${name} is already defined!")
         }
-        DefaultTool implementation = new DefaultTool(name: name)
+        DefaultTool implementation = new DefaultTool(name: name, runtime: jipRuntime)
         tools.put(name, implementation)
         return implementation
     }
@@ -61,7 +71,7 @@ class JipDSLContext {
             throw new RuntimeException("Tool ${name} is already defined!")
         }
         log.info("Adding tool ${name}")
-        DefaultTool implementation = new DefaultTool(name: name)
+        DefaultTool implementation = new DefaultTool(name: name, runtime: jipRuntime)
         definition.delegate = implementation
         definition.resolveStrategy = Closure.DELEGATE_FIRST
         definition.call()

@@ -1,6 +1,7 @@
 package jip.dsl
 
 import com.sun.xml.internal.ws.api.pipe.PipelineAssembler
+import jip.JipEnvironment
 import jip.graph.Pipeline
 import org.codehaus.groovy.control.customizers.ImportCustomizer
 import org.codehaus.groovy.control.CompilerConfiguration
@@ -11,15 +12,22 @@ import org.codehaus.groovy.control.CompilerConfiguration
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
 class JipDSL {
+
     /**
      * the current context
      */
     JipDSLContext context
+
+    /**
+     * The runtime
+     */
+    JipEnvironment jipRuntime
+
     /**
      * Create a new instance with a new context
      */
     JipDSL() {
-        this(new JipDSLContext())
+        this(new JipDSLContext(null))
     }
 
     /**
@@ -29,6 +37,7 @@ class JipDSL {
      */
     JipDSL(JipDSLContext context) {
         this.context = context
+        this.jipRuntime = context.jipRuntime
     }
 
     /**
@@ -37,7 +46,7 @@ class JipDSL {
      * @param script the script
      * @param args additional arguments bound to the interpreter as args
      */
-    void evaluateToolDefinition(String script, Map args){
+    JipDSLContext evaluateToolDefinition(String script, Map args){
         ExpandoMetaClass.enableGlobally()
         def binding = new Binding([
                 context: context,
@@ -51,7 +60,7 @@ class JipDSL {
         config.addCompilationCustomizers importCustomizer
 
         def shell = new GroovyShell(this.class.classLoader, binding, config)
-        evaluateToolDefinition(shell.evaluate("{->\n${script}\n}"))
+        return evaluateToolDefinition(shell.evaluate("{->\n${script}\n}"))
     }
 
     /**
@@ -60,8 +69,8 @@ class JipDSL {
      * @param stream the stream
      * @param args the arguments
      */
-    void evaluateToolDefinition(InputStream stream, Map args){
-        evaluateToolDefinition(stream.text, args)
+    JipDSLContext evaluateToolDefinition(InputStream stream, Map args){
+        return evaluateToolDefinition(stream.text, args)
     }
 
     /**
@@ -70,8 +79,8 @@ class JipDSL {
      * @param file the file
      * @param args the arguments
      */
-    void evaluateToolDefinition(File file, Map args){
-        evaluateToolDefinition(file.newInputStream(), args)
+    JipDSLContext evaluateToolDefinition(File file, Map args){
+        return evaluateToolDefinition(file.newInputStream(), args)
     }
 
     /**
@@ -79,10 +88,14 @@ class JipDSL {
      *
      * @param script the script closure
      */
-    void evaluateToolDefinition(Closure script){
-        script.delegate = context
+    JipDSLContext evaluateToolDefinition(Closure script){
+        JipDSLContext privateContext = new JipDSLContext(jipRuntime)
+        script.delegate = privateContext
         script.call()
+        context.installer.putAll(privateContext.installer)
+        context.tools.putAll(privateContext.tools)
         context.validate()
+        return privateContext
     }
     /**
      * Evaluate a pipeline run closure

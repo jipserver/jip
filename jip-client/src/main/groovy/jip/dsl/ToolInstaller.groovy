@@ -1,5 +1,6 @@
 package jip.dsl
 
+import jip.JipEnvironment
 import jip.tools.Installer
 import jip.runner.BasicScriptRunner
 
@@ -14,39 +15,70 @@ class ToolInstaller implements Installer{
      * The installer name
      */
     String name
+
+    /**
+     * The tools version
+     */
+    String version = "default"
+
     /**
      * The installation procedure
      */
     def exec
+
     /**
      * The check procedure
      */
     def check
+
+    /**
+     * List of dependencies
+     */
+    def dependsOn = []
+
+    /**
+     * Additional environment
+     */
+    def environment
+    /**
+     * The runtime environment
+     */
+    JipEnvironment runtime
 
     @Override
     String getName() {
         return name
     }
 
+    /**
+     * Get the version name
+     *
+     * @return version the version name
+     */
+    @Override
+    String getVersion(){
+        return version
+    }
+    /**
+     * Get the dependencies
+     *
+     * @return dependencies the dependencies
+     */
+    @Override
+    String[] getDependencies() {
+        return dependsOn
+    }
+
     @Override
     void install(File home) {
         if(exec instanceof Closure){
+            this.exec.delegate = runtime.getExecuteUtilities(home, [name])
             this.exec.call(home)
         }else{
-            int r =new BasicScriptRunner(
-                    "Install ${name}".toString(),
-                    BasicScriptRunner.Interpreter.bash,
-                    null,
-                    exec,
-                    null,
-                    ["CWD":home.absolutePath],
-                    System.out,
-                    System.err
-            ).run()
-            if (r != 0){
+            def executeUtils = runtime.getExecuteUtilities(home, [name])
+            if (executeUtils.bash(exec.toString()) != 0){
                 throw new RuntimeException("Failed installing ${name}")
             }
-
         }
     }
 
@@ -54,23 +86,14 @@ class ToolInstaller implements Installer{
     boolean isInstalled(File home) {
         if(check != null){
             if(check instanceof Closure){
+                check.delegate = runtime.getExecuteUtilities(home,null)
                 def b = check.call(home)
                 return b instanceof Boolean ? b : b != null
             }else{
-                int r = new BasicScriptRunner(
-                            "Checking Install ${name}".toString(),
-                            BasicScriptRunner.Interpreter.bash,
-                            null,
-                            check,
-                            null,
-                            ["CWD":home.absolutePath],
-                            System.out,
-                            System.err
-                ).run()
-                return r == 0
+                def executeUtils = runtime.getExecuteUtilities(home, null)
+                return executeUtils.bash(check.toString()) == 0
             }
         }
-
         return false
     }
 
@@ -92,6 +115,23 @@ class ToolInstaller implements Installer{
     }
 
     /**
+     * Set dependencies
+     *
+     * @param dependsOn
+     */
+    void dependsOn(def dependsOn){
+        this.dependsOn = dependsOn
+    }
+    /**
+     * Set the installer version
+     *
+     * @param version the version
+     */
+    void version(String version){
+        this.version = version
+    }
+
+    /**
      * Ensure all mandatory properties or
      * throw in Exception if something is missing
      *
@@ -101,5 +141,13 @@ class ToolInstaller implements Installer{
         if(exec == null) throw new NullPointerException("No installation procedure specified")
         if(!(exec instanceof String) && !(exec instanceof Closure)) throw new IllegalArgumentException("Execution has to be a string or a closure")
         if(check != null && (!(check instanceof String) && !(check instanceof Closure))) throw new IllegalArgumentException("Checker has to be a string or a closure")
+    }
+
+    @Override
+    Map<String, String> getEnvironment(File home) {
+        if (environment instanceof Closure){
+            return environment.call(home)
+        }
+        return environment
     }
 }

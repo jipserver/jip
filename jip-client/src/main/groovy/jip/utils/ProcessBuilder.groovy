@@ -1,8 +1,7 @@
 package jip.utils
 
-import jip.runner.BasicScriptRunner
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 /**
  * Create a BasicScriptRunner
@@ -15,13 +14,19 @@ class ProcessBuilder {
      */
     private final String name;
     /**
-     * The interpreter used to run the script
-     */
-    private BasicScriptRunner.Interpreter interpreter;
-    /**
      * The script to be executed
      */
     private String script;
+
+    /**
+     * The executable to run
+     */
+    private File executable
+    /**
+     * The interpreter
+     */
+    private String interpreter
+
     /**
      * The arguments passed to the script
      */
@@ -49,6 +54,16 @@ class ProcessBuilder {
      */
     private String workingDir;
 
+    /**
+     * Runtime of the job
+     */
+    private long runtime = -1;
+
+    ProcessBuilder(File executable) {
+        this(null, null)
+        this.executable = executable
+    }
+
     ProcessBuilder(String script) {
         this(script, null)
     }
@@ -63,20 +78,15 @@ class ProcessBuilder {
         this.stdout = System.out
         this.script = script
         this.environment = new HashMap<String, String>()
-        this.interpreter = BasicScriptRunner.Interpreter.bash
         this.workingDir = new File("").absolutePath
+        this.interpreter = "bash"
         for (Map.Entry<String, String> e : System.getenv().entrySet()) {
             this.environment[e.key] = e.value
         }
     }
 
-    public ProcessBuilder interpreter(BasicScriptRunner.Interpreter interpreter){
-        this.interpreter = interpreter
-        return this
-    }
-
     public ProcessBuilder interpreter(String interpreter){
-        this.interpreter = BasicScriptRunner.Interpreter.valueOf(interpreter)
+        this.interpreter = interpreter
         return this
     }
 
@@ -112,9 +122,57 @@ class ProcessBuilder {
         return this
     }
 
-    BasicScriptRunner get() {
-        def r = new BasicScriptRunner(name, interpreter, interpreterOptions, script, arguments, environment, stdout, stderr, workingDir)
-        return r;
+    ProcessBuilder out(OutputStream outputStream) {
+        this.stdout = outputStream
+        return this
+    }
+
+    ProcessBuilder err(OutputStream outputStream) {
+        this.stderr = outputStream
+        return this
+    }
+
+
+    public int run() {
+        List<String> cmd = new ArrayList<String>()
+        def file
+        def executable = this.executable
+        if (script != null){
+            file = File.createTempFile("jip", ".script")
+            file.deleteOnExit()
+            file.write(script)
+            executable = file.getAbsolutePath()
+        }
+
+        if (interpreter != null && !interpreter.isEmpty()){
+            cmd.add(interpreter)
+        }
+        if (interpreterOptions && interpreterOptions.length > 0){
+            cmd.addAll(interpreterOptions)
+        }
+
+        cmd.add(executable.toString())
+
+        java.lang.ProcessBuilder pb = new java.lang.ProcessBuilder()
+                .directory(new File(workingDir))
+                .command(cmd);
+        pb.environment().putAll(environment)
+        long startTime = System.currentTimeMillis();
+        try {
+            Process process = pb.start()
+            ExecutorService executors = Executors.newFixedThreadPool(2)
+            def out = executors.submit(new InputStreamGlobber(process.getInputStream(), stdout))
+            def err = executors.submit(new InputStreamGlobber(process.getErrorStream(), stderr))
+            out.get()
+            err.get()
+            executors.shutdownNow()
+            return process.exitValue()
+        } finally {
+            runtime = System.currentTimeMillis() - startTime
+            if (file != null) {
+                file.delete()
+            }
+        }
     }
 
     void extendEnvironment(Map<String, String> env) {
@@ -129,5 +187,13 @@ class ProcessBuilder {
                 }
             }
         }
+    }
+    /**
+     * Return total runtime of the job or -1
+     *
+     * @return time runtime
+     */
+    long getRuntime() {
+        return runtime
     }
 }

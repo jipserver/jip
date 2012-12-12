@@ -57,6 +57,13 @@ public interface Parameter {
     boolean isMandatory();
 
     /**
+     * Get raw data type accepted by this parameter
+     *
+     * @return data type the raw data type
+     */
+    Class getDataType();
+
+    /**
      * Return an optional default value
      *
      * @return default optional default
@@ -69,5 +76,12 @@ public interface Parameter {
      * @return type the parameter type
      */
     String getType();
+
+    /**
+     * Optional list of valid options
+     *
+     * @return options
+     */
+    Object[] getOptions();
 
 }

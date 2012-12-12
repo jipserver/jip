@@ -1,6 +1,7 @@
 package jip.dsl
 
-import jip.runner.BasicScriptRunner
+import jip.utils.Templates
+
 
 /**
  * Basic DSL tests
@@ -136,7 +137,7 @@ class JipDSLTest extends GroovyTestCase {
             }
         """, [:])
         assert dsl.context.tools.size() == 1
-        assert (dsl.context.tools["test-tool"].exec instanceof Closure)
+        assert (dsl.context.tools["test-tool"].closure instanceof Closure)
         assert dsl.context.tools["test-tool"].description == "checkme"
     }
 
@@ -151,8 +152,8 @@ class JipDSLTest extends GroovyTestCase {
         """, [:])
         assert dsl.context.tools.size() == 1
         assert dsl.context.tools["test-tool"].name == "test-tool"
-        assert dsl.context.tools["test-tool"].exec == "ls -la"
-        assert dsl.context.tools["test-tool"].interpreter == BasicScriptRunner.Interpreter.bash
+        assert dsl.context.tools["test-tool"].closure == "ls -la"
+        assert dsl.context.tools["test-tool"].interpreter == "bash"
 
     }
     public void testParsingToolWithInputParameter(){
@@ -287,9 +288,9 @@ class JipDSLTest extends GroovyTestCase {
             }
         ''', [:])
         def tool = dsl.context.tools["test-tool"]
-        assert tool.createScript([:]) == "I am , are you my  ? yes"
-        assert tool.createScript([name:"Hans", target:"enemy"]) == "I am Hans, are you my enemy ? yes"
-        assert tool.createScript([name:"Hans", target:"enemy", answer:"no"]) == "I am Hans, are you my enemy ? no"
+        assert Templates.fillTemplate(tool, tool.exec, [:]) == "I am , are you my  ? yes"
+        assert Templates.fillTemplate(tool, tool.exec, [name:"Hans", target:"enemy"]) == "I am Hans, are you my enemy ? yes"
+        assert Templates.fillTemplate(tool, tool.exec, [name:"Hans", target:"enemy", answer:"no"]) == "I am Hans, are you my enemy ? no"
 
     }
 

@@ -4,14 +4,10 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPException;
-import jip.JSAPHelper;
-import jip.JipModule;
 import jip.commands.JipCommand;
 import jip.commands.JipCommandService;
-import jip.dsl.ExecuteUtils;
 import jip.plugin.PluginBootstrapper;
 import jip.plugin.PluginRegistry;
-import jip.runner.JipExecutor;
 import jip.tools.ToolService;
 import jip.utils.SimpleTablePrinter;
 import org.apache.log4j.ConsoleAppender;
@@ -25,7 +21,8 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Properties;
 
 /**
  * JIP Client main class
@@ -55,26 +52,6 @@ public class Jip implements JipEnvironment{
         }else{
             return new File(System.getProperty("user.home") + "/.jip");
         }
-    }
-
-    @Override
-    public JipExecutor getExecuteUtilities(File workingDir, List<String> installer) {
-        if(installer != null && installer.size() >0){
-            Map<String, String> merged = new HashMap<String, String>();
-            for (String name : installer) {
-                for (Map<String, String> map : toolService.getInstallerEnvironments(name)) {
-                    for (String k : map.keySet()) {
-                        if(!merged.containsKey(k)){
-                            merged.put(k, map.get(k));
-                        }else{
-                            merged.put(k, merged.get(k) + ":" + map.get(k));
-                        }
-                    }
-                }
-            }
-            return new ExecuteUtils(workingDir, merged);
-        }
-        return new ExecuteUtils(workingDir, null);
     }
 
     /**

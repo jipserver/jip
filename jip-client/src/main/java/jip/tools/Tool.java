@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Basic tool interface
+ * Basic tool interface that describes something executable
  *
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
@@ -18,6 +18,13 @@ public interface Tool {
      * @return name the name of the tool
      */
     String getName();
+
+    /**
+     * The tool version
+     *
+     * @return version the tools version
+     */
+    String getVersion();
 
     /**
      * Get short description of the tool
@@ -61,7 +68,5 @@ public interface Tool {
      * @return installer the installer that this tool needs
      */
     List<String> getInstaller();
-
-
 
 }

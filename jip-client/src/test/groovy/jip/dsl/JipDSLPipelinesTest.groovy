@@ -317,7 +317,9 @@ class JipDSLPipelinesTest extends GroovyTestCase {
         def script = {
             tool("bash"){
                 exec '''${command.join(" ")} > ${output}'''
-                args '''${input.join(" ")}'''
+                args {
+                    [input.join(" ")]
+                }
                 option(name:"command", list:true)
                 input(name:"input", list:true, defaultValue:[])
                 output(name:"output", type:"out")

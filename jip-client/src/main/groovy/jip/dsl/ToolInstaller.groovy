@@ -2,7 +2,6 @@ package jip.dsl
 
 import jip.JipEnvironment
 import jip.tools.Installer
-import jip.runner.BasicScriptRunner
 
 /**
  * Groovy based implementation of a

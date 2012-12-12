@@ -57,7 +57,7 @@ public class SimpleTablePrinter {
      * @param header
      */
     public SimpleTablePrinter(final List<String> header) {
-        this(header, true, true, true);
+        this(header, true, true, false);
     }
 
     /**

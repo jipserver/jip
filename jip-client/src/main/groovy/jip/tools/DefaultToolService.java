@@ -97,14 +97,16 @@ public class DefaultToolService implements ToolService {
         // 2. $JIP_HOME/tools/*.groovy
         // 4. $USER_HOME/tools/*/jip-tool.groovy
         // 5. $USER_HOME/tools/*.groovy
-        String jipHome = runtime.getJipHome(false).getAbsolutePath();
-        String userHome = runtime.getJipHome(true).getAbsolutePath();
-        JipDSL dsl = new JipDSL(toolContext);
-        if(jipHome != null){
-            collectTools(dsl, new File(jipHome, "tools"));
-        }
-        if(userHome != null){
-            collectTools(dsl, new File(userHome, "tools"));
+        if(runtime != null){
+            String jipHome = runtime.getJipHome(false).getAbsolutePath();
+            String userHome = runtime.getJipHome(true).getAbsolutePath();
+            JipDSL dsl = new JipDSL(toolContext);
+            if(jipHome != null){
+                collectTools(dsl, new File(jipHome, "tools"));
+            }
+            if(userHome != null){
+                collectTools(dsl, new File(userHome, "tools"));
+            }
         }
     }
 

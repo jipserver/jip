@@ -10,54 +10,6 @@ import jip.utils.Templates
  */
 class JipDSLTest extends GroovyTestCase {
 
-    public void testInstallerDefinitionErrors(){
-        def dsl = new JipDSL()
-        // test error on instantiation without exec
-        try {
-            dsl.evaluateToolDefinition("""
-                installer "test-installer", {
-                }
-            """, [:])
-            fail()
-        } catch (Exception error) {
-            assert error.message == "No installation procedure specified"
-        }
-
-
-        dsl = new JipDSL()
-        try {
-            dsl.evaluateToolDefinition("""
-                installer "test-installer"
-            """, [:])
-            fail()
-        } catch (Exception error) {
-            assert error.message == "No installation procedure specified"
-        }
-
-        dsl = new JipDSL()
-        try {
-            dsl.evaluateToolDefinition("""
-                installer "test-installer", {
-                    exec 1
-                }
-            """, [:])
-            fail()
-        } catch (Exception error) {
-            assert error.message == "Execution has to be a string or a closure"
-        }
-
-        dsl = new JipDSL()
-        try {
-            dsl.evaluateToolDefinition("""
-                installer "test-installer", {
-                    check 1
-                }
-            """, [:])
-            fail()
-        } catch (Exception error) {
-            assert error.message == "No installation procedure specified"
-        }
-    }
     public void testInstallerWithExec(){
         def dsl = new JipDSL()
         // test error on instantiation without exec
@@ -68,8 +20,8 @@ class JipDSLTest extends GroovyTestCase {
             }
         """, [:])
         assert dsl.context.installer.size() == 1
-        assert dsl.context.installer["test-installer"].exec == "runme"
-        assert dsl.context.installer["test-installer"].check == "checkme"
+        assert dsl.context.installer["test-installer"].closure != null
+        assert dsl.context.installer["test-installer"].check != null
 
         dsl = new JipDSL()
         // test error on instantiation without exec
@@ -80,8 +32,8 @@ class JipDSLTest extends GroovyTestCase {
             }
         """, [:])
         assert dsl.context.installer.size() == 1
-        assert dsl.context.installer["test-installer"].exec == "runme"
-        assert dsl.context.installer["test-installer"].check == "checkme"
+        assert dsl.context.installer["test-installer"].closure != null
+        assert dsl.context.installer["test-installer"].check != null
 
         dsl = new JipDSL()
         dsl.evaluateToolDefinition("""
@@ -91,8 +43,8 @@ class JipDSLTest extends GroovyTestCase {
             }
         """, [:])
         assert dsl.context.installer.size() == 1
-        assert dsl.context.installer["test-installer"].exec == "runme"
-        assert dsl.context.installer["test-installer"].check == "checkme"
+        assert dsl.context.installer["test-installer"].closure != null
+        assert dsl.context.installer["test-installer"].check != null
 
         dsl = new JipDSL()
         // test error on instantiation without exec
@@ -103,8 +55,8 @@ class JipDSLTest extends GroovyTestCase {
             }
         """, [:])
         assert dsl.context.installer.size() == 1
-        assert dsl.context.installer["test-installer"].exec == "runme"
-        assert dsl.context.installer["test-installer"].check == "checkme"
+        assert dsl.context.installer["test-installer"].closure != null
+        assert dsl.context.installer["test-installer"].check != null
     }
 
     public void testInstallerPassClosure(){
@@ -119,8 +71,8 @@ class JipDSLTest extends GroovyTestCase {
             }
         """, [:])
         assert dsl.context.installer.size() == 1
-        assert (dsl.context.installer["test-installer"].exec instanceof Closure)
-        assert dsl.context.installer["test-installer"].check == "checkme"
+        assert (dsl.context.installer["test-installer"].closure instanceof Closure)
+        assert dsl.context.installer["test-installer"].check != null
     }
 
 
@@ -138,7 +90,7 @@ class JipDSLTest extends GroovyTestCase {
         """, [:])
         assert dsl.context.tools.size() == 1
         assert (dsl.context.tools["test-tool"].closure instanceof Closure)
-        assert dsl.context.tools["test-tool"].description == "checkme"
+
     }
 
     public void testParsingToolWithStringAndInterpreter(){
@@ -152,8 +104,7 @@ class JipDSLTest extends GroovyTestCase {
         """, [:])
         assert dsl.context.tools.size() == 1
         assert dsl.context.tools["test-tool"].name == "test-tool"
-        assert dsl.context.tools["test-tool"].closure == "ls -la"
-        assert dsl.context.tools["test-tool"].interpreter == "bash"
+        assert dsl.context.tools["test-tool"].closure != null
 
     }
     public void testParsingToolWithInputParameter(){
@@ -287,10 +238,11 @@ class JipDSLTest extends GroovyTestCase {
                 option( name:"answer", defaultValue:"yes")
             }
         ''', [:])
+        def script = 'I am ${name}, are you my ${target} ? ${answer}'
         def tool = dsl.context.tools["test-tool"]
-        assert Templates.fillTemplate(tool, tool.exec, [:]) == "I am , are you my  ? yes"
-        assert Templates.fillTemplate(tool, tool.exec, [name:"Hans", target:"enemy"]) == "I am Hans, are you my enemy ? yes"
-        assert Templates.fillTemplate(tool, tool.exec, [name:"Hans", target:"enemy", answer:"no"]) == "I am Hans, are you my enemy ? no"
+        assert Templates.fillTemplate(tool, script, [:]) == "I am , are you my  ? yes"
+        assert Templates.fillTemplate(tool, script, [name:"Hans", target:"enemy"]) == "I am Hans, are you my enemy ? yes"
+        assert Templates.fillTemplate(tool, script, [name:"Hans", target:"enemy", answer:"no"]) == "I am Hans, are you my enemy ? no"
 
     }
 
@@ -303,9 +255,9 @@ class JipDSLTest extends GroovyTestCase {
                 option( name:"list", defaultValue:[1,2,3])
             }
         ''', [:])
+        def script = '<% list.each{ out << "${it}" } %>'
         def tool = dsl.context.tools["test-tool"]
-        //assert tool.createScript([:]) == "I am , are you my  ? yes"
-        println tool.createScript([:]) == "123"
+        Templates.fillTemplate(tool, script, [:]) == "123"
 
     }
 

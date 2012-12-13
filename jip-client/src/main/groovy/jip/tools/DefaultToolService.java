@@ -110,6 +110,17 @@ public class DefaultToolService implements ToolService {
         }
     }
 
+    @Override
+    public void install(Installer installer, File dir) {
+        if(installer == null) throw new NullPointerException("NULL installer can not be installed");
+        if(installer instanceof DefaultInstaller){
+            DefaultInstaller di = ((DefaultInstaller)installer);
+
+        }else{
+            installer.install(dir);
+        }
+    }
+
     /**
      * Collect tools from the given base directory
      *

@@ -53,6 +53,15 @@ public interface ToolService {
     void installDependencies(String toolName, boolean userSpace);
 
     /**
+     * Install the given isntaller into the specified
+     * directory
+     *
+     * @param installer the installer
+     * @param dir the directory
+     */
+    void install(Installer installer, File dir);
+
+    /**
      * Returns a list of all available installer environments
      */
     List<Map<String,String>> getInstallerEnvironments();

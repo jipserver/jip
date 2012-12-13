@@ -94,7 +94,6 @@ class JipDSL {
         script.call()
         context.installer.putAll(privateContext.installer)
         context.tools.putAll(privateContext.tools)
-        context.validate()
         return privateContext
     }
     /**

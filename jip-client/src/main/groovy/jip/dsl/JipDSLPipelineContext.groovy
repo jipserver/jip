@@ -125,7 +125,7 @@ class JipDSLPipelineContext {
                             defaultInput: p.name == tool.defaultInput,
                             defaultOutput: p.name == tool.defaultOutput,
                             defaultValue: p.getDefaultValue(),
-                            options: null, // todo : fill or remove this
+                            options: p.getOptions(),
                             type: p.type
                     ])
                     job.getParameters().add(pp)

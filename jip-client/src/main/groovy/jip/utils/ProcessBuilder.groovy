@@ -12,7 +12,7 @@ class ProcessBuilder {
     /**
      * The name of this runner
      */
-    private final String name;
+    private String name;
     /**
      * The script to be executed
      */
@@ -95,7 +95,17 @@ class ProcessBuilder {
         return this
     }
 
+    public ProcessBuilder name(String name){
+        this.name = name
+        return this
+    }
+
     public ProcessBuilder arguments(String...args){
+        this.arguments = args;
+        return this;
+    }
+
+    public ProcessBuilder arguments(List args){
         this.arguments = args;
         return this;
     }
@@ -119,6 +129,11 @@ class ProcessBuilder {
 
     public ProcessBuilder dir(String dir){
         this.workingDir = dir
+        return this
+    }
+
+    public ProcessBuilder dir(File dir){
+        this.workingDir = dir == null ? new File(".").absolutePath : dir.absolutePath
         return this
     }
 
@@ -154,7 +169,7 @@ class ProcessBuilder {
         cmd.add(executable.toString())
 
         java.lang.ProcessBuilder pb = new java.lang.ProcessBuilder()
-                .directory(new File(workingDir))
+                .directory(new File(workingDir == null ? "." : workingDir))
                 .command(cmd);
         pb.environment().putAll(environment)
         long startTime = System.currentTimeMillis();
@@ -166,7 +181,7 @@ class ProcessBuilder {
             out.get()
             err.get()
             executors.shutdownNow()
-            return process.exitValue()
+            return process.waitFor()
         } finally {
             runtime = System.currentTimeMillis() - startTime
             if (file != null) {

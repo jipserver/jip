@@ -2,6 +2,7 @@ package jip.dsl
 
 import com.google.inject.Inject
 import jip.JipEnvironment
+import jip.tools.DefaultInstaller
 import jip.tools.DefaultTool
 import jip.tools.JipContext
 import org.slf4j.LoggerFactory
@@ -44,14 +45,14 @@ class JipDSLContext implements JipContext{
             throw new RuntimeException("Installer ${name} is already defined!")
         }
         log.info("Adding installer ${name}")
-        ToolInstaller implementation = new ToolInstaller(name: name, runtime:jipRuntime)
+        DefaultInstaller installer = new DefaultInstaller()
+        installer.setName(name)
         if(definition != null){
-            definition.delegate = implementation
+            definition.delegate = new InstallerDelegate(installer)
             definition.resolveStrategy = Closure.DELEGATE_FIRST
             definition.call()
         }
-        implementation.validate()
-        installer.put(name, implementation)
+        this.installer.put(name, installer)
     }
 
     def tool(String name, Closure definition){
@@ -66,10 +67,4 @@ class JipDSLContext implements JipContext{
         tools.put(name, implementation)
     }
 
-    void validate(){
-        // validate installer
-        for (Installer i: installer.values()) {
-            i.validate()
-        }
-    }
 }

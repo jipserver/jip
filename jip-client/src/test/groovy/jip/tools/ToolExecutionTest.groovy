@@ -28,6 +28,38 @@ class ToolExecutionTest {
         }finally {
             "rm -Rf ${dir.absolutePath}".execute().waitFor()
         }
+    }
+
+
+    @Test
+    public void testParameterClosureExtension() throws Exception {
+        def tools = {
+            tool("fastqc"){
+                exec '''touch ${input}'''
+                input(name:"input", list:true)
+                output(name:"output", list:true)
+            }
+            tool("count"){
+                exec '''ls ${input} > ${output}'''
+                output(name:"output")
+            }
+            tool("pipe"){
+                pipeline{
+                    fastqc(input:["1.txt", "2.txt", "3.txt"]) | count(output:"count-out.txt")
+                }
+            }
+
+        }
+
+        def tool = new JipDSL().evaluateToolDefinition(tools).getTools().get("pipe")
+        def dir = Files.createTempDir()
+        try{
+            tool.run(dir, [:])
+            assert new File(dir, "count-out.txt").exists()
+            assert new File(dir, "count-out.txt").text.trim() == ""
+        }finally {
+            "rm -Rf ${dir.absolutePath}".execute().waitFor()
+        }
 
 
     }
@@ -40,7 +72,7 @@ class ToolExecutionTest {
                 output(name:"output", mandatory:true)
             }
             tool("count"){
-                exec '''cat ${input} | wc -l  > ${output}'''
+                exec '''cat ${input.toString()} | wc -l  > ${output}'''
                 input(name:"input", mandatory:true)
                 output(name:"output", mandatory:true)
             }

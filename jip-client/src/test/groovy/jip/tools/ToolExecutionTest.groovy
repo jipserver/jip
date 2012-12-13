@@ -35,12 +35,13 @@ class ToolExecutionTest {
     public void testParameterClosureExtension() throws Exception {
         def tools = {
             tool("fastqc"){
-                exec '''touch ${input}'''
+                exec '''touch ${input.toString()}'''
                 input(name:"input", list:true)
-                output(name:"output", list:true)
+                output(name:"output", list:true, defaultValue:"\${input.name}")
             }
             tool("count"){
-                exec '''ls ${input} > ${output}'''
+                exec '''ls ${input.join(" ")} > ${output}'''
+                input(name:"input", list: true)
                 output(name:"output")
             }
             tool("pipe"){
@@ -56,7 +57,7 @@ class ToolExecutionTest {
         try{
             tool.run(dir, [:])
             assert new File(dir, "count-out.txt").exists()
-            assert new File(dir, "count-out.txt").text.trim() == ""
+            assert new File(dir, "count-out.txt").text.trim() == "1.txt\n2.txt\n3.txt"
         }finally {
             "rm -Rf ${dir.absolutePath}".execute().waitFor()
         }
@@ -72,7 +73,7 @@ class ToolExecutionTest {
                 output(name:"output", mandatory:true)
             }
             tool("count"){
-                exec '''cat ${input.toString()} | wc -l  > ${output}'''
+                exec '''cat ${input} | wc -l  > ${output}'''
                 input(name:"input", mandatory:true)
                 output(name:"output", mandatory:true)
             }

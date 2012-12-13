@@ -109,6 +109,26 @@ public class PipelineGraph {
             graph.addVertex(jobNode);
         }
 
+        log.debug("Adding default output values");
+        for (JobNode node : graph.vertexSet()) {
+            for (Parameter parameter : node.getParameter()) {
+                if(parameter.isOutput() && parameter.getDefaultValue() == null && !parameter.isMandatory()){
+                    Object value = node.getConfiguration().get(parameter.getName());
+                    if(value == null){
+                        value = node.getPipelineJob().getConfiguration().get(parameter.getName());
+                    }
+                    if(value == null){
+                        String output = node.getPipelineJob().getToolId()+"."+node.getNodeId()+"."+parameter.getName();
+                        if(parameter.getType() != null){
+                            output += "." + parameter.getType();
+                        }
+                        node.getConfiguration().put(parameter.getName(), output);
+                    }
+                }
+            }
+        }
+
+
         log.debug("Create Pipeline Context");
         context = createContext();
 
@@ -132,20 +152,6 @@ public class PipelineGraph {
             createEdges(node, node.findDependency(this));
         }
 
-        log.debug("Adding default output values");
-        for (JobNode node : graph.vertexSet()) {
-            for (Parameter parameter : node.getParameter()) {
-                if(parameter.isOutput() && parameter.getDefaultValue() == null && !parameter.isMandatory()){
-                    if(node.getConfiguration().get(parameter.getName()) == null){
-                        String output = node.getPipelineJob().getToolId()+"."+node.getNodeId()+"."+parameter.getName();
-                        if(parameter.getType() != null){
-                            output += "." + parameter.getType();
-                        }
-                        node.getConfiguration().put(parameter.getName(), output);
-                    }
-                }
-            }
-        }
     }
 
     private Object cleanToString(Object value){

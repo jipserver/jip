@@ -287,7 +287,7 @@ class JipDSLPipelinesTest extends GroovyTestCase {
         graph.prepare()
         graph.reduceDependencies()
         assert graph.findNode("bash-1") != null
-        assert graph.findNode("bash-1").configuration["output"] == "bash-1.out"
+        assert graph.findNode("bash-1").configuration["output"] == "bash.bash-1.output.out"
     }
 
     public void testOutputFileGenerationWithRunname(){
@@ -309,7 +309,7 @@ class JipDSLPipelinesTest extends GroovyTestCase {
         graph.prepare()
         graph.reduceDependencies()
         assert graph.findNode("myrun") != null
-        assert graph.findNode("myrun").configuration["output"] == "myrun.out"
+        assert graph.findNode("myrun").configuration["output"] == "bash.myrun.output.out"
     }
 
     public void testCreatingCommandLineArguments(){
@@ -335,7 +335,7 @@ class JipDSLPipelinesTest extends GroovyTestCase {
         graph.prepare()
         graph.reduceDependencies()
         assert graph.findNode("myrun") != null
-        assert graph.findNode("myrun").configuration["output"] == "myrun.out"
+        assert graph.findNode("myrun").configuration["output"] == "bash.myrun.output.out"
         assert graph.findNode("myrun").getPipelineJob().getToolId() == "bash"
     }
 

@@ -137,7 +137,7 @@ public class PipelineGraph {
             for (Parameter parameter : node.getParameter()) {
                 if(parameter.isOutput() && parameter.getDefaultValue() == null && !parameter.isMandatory()){
                     if(node.getConfiguration().get(parameter.getName()) == null){
-                        String output = node.getNodeId();
+                        String output = node.getPipelineJob().getToolId()+"."+node.getNodeId()+"."+parameter.getName();
                         if(parameter.getType() != null){
                             output += "." + parameter.getType();
                         }

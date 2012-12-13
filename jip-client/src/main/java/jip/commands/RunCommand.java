@@ -114,8 +114,9 @@ public class RunCommand implements JipCommand{
 
         // todo : run the tool
         log.info("Running tool " + toolName);
+        File cwd = new File(".");
         try {
-            tool.run(toolConfiguration);
+            tool.run(cwd, toolConfiguration);
         } catch (Exception e) {
             log.error("Error while running {} : {}", toolName, e.getMessage());
             throw new RuntimeException("Execution error for " + toolName, e);

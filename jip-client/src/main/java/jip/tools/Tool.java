@@ -2,6 +2,7 @@ package jip.tools;
 
 import jip.plugin.ExtensionPoint;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -36,10 +37,11 @@ public interface Tool {
     /**
      * Run the tool
      *
+     * @param workingDir working directory
      * @param cfg run configuration
      * @throws Exception in case of an exception
      */
-    void run(Map cfg) throws Exception;
+    void run(File workingDir, Map cfg) throws Exception;
 
     /**
      * Get map of tool parameter

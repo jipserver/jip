@@ -60,7 +60,7 @@ class JipDSLContext implements JipContext{
             throw new RuntimeException("Tool ${name} is already defined!")
         }
         log.info("Adding tool ${name}")
-        DefaultTool implementation = new DefaultTool(name: name)
+        DefaultTool implementation = new DefaultTool(name, this)
         definition.delegate = new ToolDelegate(implementation)
         definition.resolveStrategy = Closure.DELEGATE_FIRST
         definition.call()

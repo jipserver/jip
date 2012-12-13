@@ -29,7 +29,7 @@ class ToolDelegate{
 
     void exec(String exec){
         tool.setClosure({ cfg->
-            bash(exec, cfg)
+            bash(exec)
         })
     }
 

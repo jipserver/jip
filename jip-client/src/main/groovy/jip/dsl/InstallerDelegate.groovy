@@ -38,7 +38,7 @@ class InstallerDelegate {
 
     void exec(String exec){
         Closure c = { cfg->
-            bash(check, [args:[cfg], cwd:cfg])
+            bash(exec, [args:[cfg], cwd:cfg])
         }
         installer.setClosure(c)
 

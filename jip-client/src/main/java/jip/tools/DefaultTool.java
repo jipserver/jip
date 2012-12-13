@@ -1,7 +1,15 @@
 package jip.tools;
 
 import groovy.lang.Closure;
+import jip.dsl.JipDSL;
+import jip.dsl.JipDSLContext;
+import jip.graph.JobNode;
+import jip.graph.Pipeline;
+import jip.graph.PipelineGraph;
+import jip.graph.PipelineJob;
+import jip.utils.ExecuteDelegate;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +18,7 @@ import java.util.Map;
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
 public class DefaultTool implements Tool {
+    private JipDSLContext context;
     private String description;
     private String name;
     private Map<String, Parameter> parameter;
@@ -20,6 +29,27 @@ public class DefaultTool implements Tool {
     private Closure pipeline;
     private String version;
     private Closure args;
+
+    /**
+     * Create a new but empty tool
+     *
+     * @param name the tool name
+     */
+    public DefaultTool(String name) {
+        this(name, null);
+    }
+
+    /**
+     * Create a new tool with a reference to the JIP context.
+     * This is needed to evaluate and run pipelines
+     *
+     * @param name the tool name
+     * @param context the context
+     */
+    public DefaultTool(String name, JipDSLContext context) {
+        this.name = name;
+        this.context = context;
+    }
 
     @Override
     public String getName() {
@@ -36,8 +66,29 @@ public class DefaultTool implements Tool {
     }
 
     @Override
-    public void run(Map cfg) throws Exception {
-        closure.call(cfg);
+    public void run(File cwd, Map cfg) throws Exception {
+        if(pipeline == null){
+            ExecuteDelegate delegate = new ExecuteDelegate(cwd, true);
+            delegate.setTemplateConfiguration(this, cfg);
+            closure.setDelegate(delegate);
+            closure.call(cfg);
+        }else{
+            if(context == null){
+                throw new NullPointerException("No JIP context specified! Unable to evaluate and run pipelines");
+            }
+            // run pipeline
+            Pipeline pipeline = new JipDSL(context).evaluateRun(this.pipeline);
+            PipelineGraph graph = new PipelineGraph(pipeline);
+            graph.prepare();
+            graph.reduceDependencies();
+            for (JobNode node : graph.getNodes()) {
+                PipelineJob pipelineJob = node.getPipelineJob();
+                String tool = pipelineJob.getToolId();
+                Tool jobTool = context.getTools().get(tool);
+                if(jobTool == null) throw new NullPointerException("Tool " + tool + " not found");
+                jobTool.run(cwd, node.getConfiguration());
+            }
+        }
     }
 
     @Override
@@ -111,4 +162,11 @@ public class DefaultTool implements Tool {
         this.args = args;
     }
 
+    public JipContext getContext() {
+        return context;
+    }
+
+    public void setContext(JipDSLContext context) {
+        this.context = context;
+    }
 }

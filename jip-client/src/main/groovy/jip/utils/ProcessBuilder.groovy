@@ -166,7 +166,13 @@ class ProcessBuilder {
             cmd.addAll(interpreterOptions)
         }
 
+
         cmd.add(executable.toString())
+        if(arguments != null && arguments.length > 0){
+            cmd.addAll(Arrays.asList(arguments))
+        }
+
+
 
         java.lang.ProcessBuilder pb = new java.lang.ProcessBuilder()
                 .directory(new File(workingDir == null ? "." : workingDir))

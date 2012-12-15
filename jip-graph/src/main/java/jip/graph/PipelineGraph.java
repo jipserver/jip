@@ -118,11 +118,40 @@ public class PipelineGraph {
                         value = node.getPipelineJob().getConfiguration().get(parameter.getName());
                     }
                     if(value == null){
-                        String output = node.getPipelineJob().getToolId()+"."+node.getNodeId()+"."+parameter.getName();
-                        if(parameter.getType() != null){
-                            output += "." + parameter.getType();
+                        if(!parameter.isList()){
+                            String output = node.getPipelineJob().getToolId()+"."+node.getNodeId()+"."+parameter.getName();
+                            if(parameter.getType() != null){
+                                output += "." + parameter.getType();
+                            }
+                            node.getConfiguration().put(parameter.getName(), output);
+                        }else{
+                            // check if there is a default input parameter
+                            // that is also a list value
+                            // if so, we take the same list with added suffix
+                            boolean set = false;
+                            for (Parameter ip : node.getParameter()) {
+                                if(ip.isDefaultInput()){
+                                    if(ip.isList()){
+                                        String output = "."+node.getPipelineJob().getToolId()+"."+node.getNodeId()+"."+parameter.getName();
+                                        if(parameter.getType() != null){
+                                            output += "." + parameter.getType();
+                                        }
+                                        node.getConfiguration().put(parameter.getName(), "${"+ip.getName()+"}"+output);
+                                        set = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            // if no list was inferred from the input,
+                            // we create a single value list
+                            if(!set){
+                                String output = node.getPipelineJob().getToolId()+"."+node.getNodeId()+"."+parameter.getName();
+                                if(parameter.getType() != null){
+                                    output += "." + parameter.getType();
+                                }
+                                node.getConfiguration().put(parameter.getName(), Arrays.asList(output));
+                            }
                         }
-                        node.getConfiguration().put(parameter.getName(), output);
                     }
                 }
             }

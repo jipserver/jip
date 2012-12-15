@@ -31,16 +31,54 @@ class ToolExecutionTest {
     }
 
 
+
     @Test
-    public void testParameterClosureExtension() throws Exception {
+    public void testParameterClosureHandling() throws Exception {
         def tools = {
             tool("fastqc"){
-                exec '''touch ${input.toString()}'''
+                exec '''touch ${output.join(" ")}'''
                 input(name:"input", list:true)
-                output(name:"output", list:true, defaultValue:"\${input.name}")
+                output(name:"output", list:true, defaultValue: { cfg->
+                    def r = []
+                    def i = 1
+                    cfg.input.each{r << i++}
+                    return r
+                })
             }
             tool("count"){
-                exec '''ls ${input.join(" ")} > ${output}'''
+                exec '''ls ${input.collect({it.fileName}).join(' ')} > ${output}'''
+                input(name:"input", list: true)
+                output(name:"output")
+            }
+            tool("pipe"){
+                pipeline{
+                    fastqc(input:["a.txt", "b.txt", "asd.txt"]) | count(output:"count-out.txt")
+                }
+            }
+
+        }
+
+        def tool = new JipDSL().evaluateToolDefinition(tools).getTools().get("pipe")
+        def dir = Files.createTempDir()
+        try{
+            tool.run(dir, [:])
+            assert new File(dir, "count-out.txt").exists()
+            assert new File(dir, "count-out.txt").text.trim() == "1\n2\n3"
+        }finally {
+            "rm -Rf ${dir.absolutePath}".execute().waitFor()
+        }
+    }
+
+    @Test
+    public void testFileNameExtensionHandling() throws Exception {
+        def tools = {
+            tool("fastqc"){
+                exec '''touch ${input.collect({it.name+".touched"}).join(' ')}'''
+                input(name:"input", list:true)
+                output(name:"output", list:true, defaultValue:"\${input.name}.touched")
+            }
+            tool("count"){
+                exec '''ls ${input.collect({it.fileName}).join(' ')} > ${output}'''
                 input(name:"input", list: true)
                 output(name:"output")
             }
@@ -57,7 +95,7 @@ class ToolExecutionTest {
         try{
             tool.run(dir, [:])
             assert new File(dir, "count-out.txt").exists()
-            assert new File(dir, "count-out.txt").text.trim() == "1.txt\n2.txt\n3.txt"
+            assert new File(dir, "count-out.txt").text.trim() == "1.touched\n2.touched\n3.touched"
         }finally {
             "rm -Rf ${dir.absolutePath}".execute().waitFor()
         }

@@ -59,6 +59,20 @@ public class FileParameter {
     }
 
     /**
+     * Get the simple name of the file excluding any extensions
+     *
+     * @return name simple name of the file without extensions
+     */
+    public String getFileName() {
+        int startIndex = file.lastIndexOf("/");
+        if (startIndex < 0) startIndex = 0;
+        else {
+            startIndex += 1;
+        }
+        return file.substring(startIndex, file.length());
+    }
+
+    /**
      * Get the parent name
      * @return parent the name of the parent directory or empty string
      */

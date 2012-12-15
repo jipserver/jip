@@ -19,6 +19,8 @@
 
 package jip.graph;
 
+import groovy.lang.Closure;
+
 import java.util.*;
 
 /**
@@ -251,6 +253,11 @@ public class JobEdge {
 
 
             if(sourceValue != null){
+                if(sourceValue instanceof Closure){
+                    Object resolved = ((Closure) sourceValue).call(source.getConfiguration());
+                    source.getConfiguration().put(this.getSourceProperty(), resolved);
+                    sourceValue = resolved;
+                }
                 boolean isFile = false;
                 for (Parameter parameter : target.getParameter()) {
                     if(parameter.getName().equals(targetProperty)){

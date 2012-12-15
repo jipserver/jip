@@ -3,16 +3,11 @@ package jip.tools;
 import groovy.lang.Closure;
 import jip.dsl.JipDSL;
 import jip.dsl.JipDSLContext;
-import jip.graph.JobNode;
-import jip.graph.Pipeline;
-import jip.graph.PipelineGraph;
-import jip.graph.PipelineJob;
+import jip.graph.*;
 import jip.utils.ExecuteDelegate;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Thasso Griebel <thasso.griebel@gmail.com>
@@ -67,6 +62,11 @@ public class DefaultTool implements Tool {
 
     @Override
     public void run(File cwd, Map cfg) throws Exception {
+        // make file paths absolute
+        if(cfg != null && cfg.size() > 0){
+            if(cwd == null) cwd = new File(".");
+            cfg = absoluteFileParameter(cwd, cfg);
+        }
         if(pipeline == null){
             ExecuteDelegate delegate = new ExecuteDelegate(cwd, true);
             delegate.setTemplateConfiguration(this, cfg);
@@ -89,6 +89,40 @@ public class DefaultTool implements Tool {
                 jobTool.run(cwd, node.getConfiguration());
             }
         }
+    }
+
+    /**
+     * Make all file parameter values absolute with respect
+     * to the given directory
+     *
+     * @param cwd the working directory
+     * @param cfg the configuration
+     * @return config copy of the configuration with absolute paths
+     */
+    Map absoluteFileParameter(File cwd, Map cfg) {
+        Map copy = new HashMap(cfg);
+        for (Parameter parameter : getParameter().values()) {
+            if(parameter.isFile() && cfg.containsKey(parameter.getName())){
+                if(parameter.isList()){
+                    // convert list
+                    ArrayList values = new ArrayList();
+                    for (Object element : ((Collection)cfg.get(parameter.getName()))) {
+                        values.add(toAbsolute(cwd, element.toString()));
+                    }
+                    copy.put(parameter.getName(), values);
+                }else{
+                    // single entry
+                    copy.put(parameter.getName(), toAbsolute(cwd, copy.get(parameter.getName()).toString()));
+                }
+            }
+        }
+        return copy;
+    }
+
+    FileParameter toAbsolute(File cwd, String path) {
+
+        if(path.startsWith("/")) return new FileParameter(path);
+        return new FileParameter(new File(cwd, path).getAbsolutePath());
     }
 
     @Override

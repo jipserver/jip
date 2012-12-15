@@ -4,6 +4,8 @@ import com.google.common.base.Joiner;
 import groovy.text.GStringTemplateEngine;
 import groovy.text.Template;
 import jip.tools.Tool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -17,6 +19,10 @@ import java.util.Map;
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
 public class Templates {
+    /**
+     * The logger
+     */
+    private static Logger log = LoggerFactory.getLogger(Templates.class);
 
     /**
      * Fill the given script template based
@@ -49,6 +55,7 @@ public class Templates {
 
         StringWriter writer = new StringWriter();
         template.make(new DelegateMap(cfg)).writeTo(writer);
+        log.info("Template written:\n{}", writer);
         return writer.toString();
     }
 

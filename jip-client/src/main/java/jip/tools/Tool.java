@@ -71,4 +71,11 @@ public interface Tool {
      */
     List<String> getInstaller();
 
+    /**
+     * Get the tools default execute environment
+     *
+     * @return the tools default execute environment
+     */
+    ExecuteEnvironment getExecuteEnvironment();
+
 }

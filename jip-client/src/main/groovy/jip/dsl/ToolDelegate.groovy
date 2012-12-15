@@ -1,8 +1,10 @@
 package jip.dsl
 
+import jip.tools.DefaultExecuteEnvironment
 import jip.tools.DefaultParameter
 import jip.tools.DefaultTool
 import jip.tools.Parameter
+import jip.utils.Time
 
 /**
  * Basic tool implementation
@@ -35,6 +37,19 @@ class ToolDelegate{
 
     void exec(Closure exec){
         tool.setClosure(exec)
+    }
+
+    void env(Closure env){
+        env.setDelegate(new ExecuteEnvironmentDelegate(((DefaultExecuteEnvironment)tool.getExecuteEnvironment())))
+        env.setResolveStrategy(Closure.DELEGATE_FIRST)
+        env()
+    }
+
+    void env(Map cfg){
+        def environment = (DefaultExecuteEnvironment) tool.getExecuteEnvironment()
+        if (cfg.time) environment.setMaxTime(new Time(cfg.time.toString()).time)
+        if (cfg.threads) environment.setThreads(cfg.threads)
+        if (cfg.memory) environment.setMaxMemory(cfg.memory)
     }
 
     void pipeline(Closure exec){

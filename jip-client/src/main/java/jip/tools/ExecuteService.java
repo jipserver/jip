@@ -9,7 +9,7 @@ import java.util.Map;
  *
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
-public interface ToolRunner {
+public interface ExecuteService {
 
     public void run(String tool, Map<String, Object> configuration, File workingDir);
 }

@@ -24,6 +24,7 @@ public class DefaultTool implements Tool {
     private Closure pipeline;
     private String version;
     private Closure args;
+    private ExecuteEnvironment executeEnvironment;
 
     /**
      * Create a new but empty tool
@@ -44,6 +45,7 @@ public class DefaultTool implements Tool {
     public DefaultTool(String name, JipDSLContext context) {
         this.name = name;
         this.context = context;
+        this.executeEnvironment = new DefaultExecuteEnvironment();
     }
 
     @Override
@@ -146,6 +148,15 @@ public class DefaultTool implements Tool {
     @Override
     public List<String> getInstaller() {
         return installer;
+    }
+
+    @Override
+    public ExecuteEnvironment getExecuteEnvironment() {
+        return executeEnvironment;
+    }
+
+    public void setExecuteEnvironment(ExecuteEnvironment executeEnvironment) {
+        this.executeEnvironment = executeEnvironment;
     }
 
     public Closure getArgs() {

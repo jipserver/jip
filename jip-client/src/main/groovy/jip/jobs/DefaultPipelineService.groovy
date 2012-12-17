@@ -3,6 +3,7 @@ package jip.jobs
 import jip.dsl.JipDSL
 import jip.dsl.JipDSLContext
 import jip.graph.FileParameter
+import jip.graph.JobEdge
 import jip.graph.JobNode
 import jip.graph.Pipeline
 import jip.graph.PipelineGraph
@@ -24,7 +25,18 @@ class DefaultPipelineService implements PipelineService{
      */
     IdService idService
 
-
+    /**
+     * Create a new default pipeline service. The context is used to
+     * resolve tools while the id service provides next ids used for the
+     * jobs
+     *
+     * @param context the context
+     * @param idService the id service
+     */
+    DefaultPipelineService(JipDSLContext context, IdService idService) {
+        this.context = context
+        this.idService = idService
+    }
 
     @Override
     PipelineJob create(String toolName, Map cfg, File cwd) throws Exception {
@@ -43,7 +55,7 @@ class DefaultPipelineService implements PipelineService{
         }
 
         Closure pipelineClosure = tool.pipeline
-        if(tool.pipeline == null){
+        if(pipelineClosure == null){
             pipelineClosure = {
                 "${tool.name}"(cfg)
             }
@@ -61,12 +73,32 @@ class DefaultPipelineService implements PipelineService{
         def pipelineRunId = idService.next()
         DefaultPipelineJob job = new DefaultPipelineJob(pipelineRunId, name)
         int counter = 1;
+        Map<String, DefaultJob> jobs = [:]
+
+        // create jobs
         for (JobNode node : graph.getNodes()) {
-            new DefaultJob("${node.getNodeId()}")
+            DefaultJob jobInstance = new DefaultJob("${node.getNodeId()}", cwd.getAbsolutePath())
+            jobInstance.setConfiguration(node.getConfiguration())
+            jobInstance.setToolName(node.getPipelineJob().getToolId())
+            jobs[node.getNodeId()] = jobInstance
+            job.getJobs().add(jobInstance)
         }
 
+        // translate edges
+        for (JobNode node : graph.getNodes()) {
+            def inEdges = graph.getGraph().incomingEdgesOf(node)
+            DefaultJob j = jobs[node.getNodeId()]
+            for (JobEdge e : inEdges) {
+                def source = graph.findNode(e.getSourceNode())
+                j.getDependenciesBefore().add(jobs[source.getNodeId()])
+            }
+            def outEdges = graph.getGraph().outgoingEdgesOf(node)
+            for (JobEdge e : outEdges) {
+                def target = graph.getGraph().getEdgeTarget(e).getNodeId()
+                j.getDependenciesAfter().add(jobs[target])
+            }
+        }
         return job;
-
     }
 
     /**

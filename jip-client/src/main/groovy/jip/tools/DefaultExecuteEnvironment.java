@@ -1,5 +1,8 @@
 package jip.tools;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  *
  * Default implementation of an execute environment
@@ -29,6 +32,13 @@ public class DefaultExecuteEnvironment implements ExecuteEnvironment{
         this.maxTime = 0;
     }
 
+    public DefaultExecuteEnvironment(Map config) {
+        this();
+        if(config.containsKey("threads")) this.threads = ((Number)config.get("threads")).intValue();
+        if(config.containsKey("maxMemory")) this.maxMemory = ((Number)config.get("maxMemory")).longValue();
+        if(config.containsKey("maxTime")) this.maxTime = ((Number)config.get("maxTime")).longValue();
+    }
+
     @Override
     public int getThreads() {
         return threads;
@@ -54,5 +64,13 @@ public class DefaultExecuteEnvironment implements ExecuteEnvironment{
 
     public void setMaxTime(long maxTime) {
         this.maxTime = maxTime;
+    }
+
+    public static Map toMap(ExecuteEnvironment env){
+        HashMap map = new HashMap();
+        map.put("threads", env.getThreads());
+        map.put("maxMemory", env.getMaxMemory());
+        map.put("maxTime", env.getMaxTime());
+        return map;
     }
 }

@@ -4,6 +4,7 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPException;
+import groovy.util.ConfigObject;
 import jip.commands.JipCommand;
 import jip.commands.JipCommandService;
 import jip.plugin.PluginBootstrapper;
@@ -41,6 +42,11 @@ public class Jip implements JipEnvironment{
     private ToolService toolService;
 
     /**
+     * The current configuration
+     */
+    private ConfigObject configuration;
+
+    /**
      * Get the JIP directory, wither global or user specific
      *
      * @param user user specific directory
@@ -52,6 +58,14 @@ public class Jip implements JipEnvironment{
         }else{
             return new File(System.getProperty("user.home") + "/.jip");
         }
+    }
+
+    @Override
+    public ConfigObject getConfiguration() {
+        if(configuration == null){
+            configuration = JipConfiguration.load(getJipHome(false), getJipHome(true));
+        }
+        return configuration;
     }
 
     /**

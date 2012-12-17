@@ -35,6 +35,33 @@ public class DefaultJob implements Job{
         this.jobStats = new DefaultJobStats();
     }
 
+    /**
+     * Initialize from map
+     *
+     * @param config the configuration
+     */
+    public DefaultJob(Map config) {
+        this.id = (String) config.get("id");
+        this.workingDirectory = (String) config.get("workingDirectory");
+        if(config.containsKey("remoteId")) this.remoteId = (String) config.get("remoteId");
+        if(config.containsKey("log")) this.log = (String) config.get("log");
+        if(config.containsKey("errorLog")) this.errorLog = (String) config.get("errorLog");
+        if(config.containsKey("toolName")) this.toolName = (String) config.get("toolName");
+        if(config.containsKey("stateReason")) this.stateReason = (String) config.get("stateReason");
+        if(config.containsKey("state")) this.state = JobState.valueOf((String) config.get("state"));
+        if(config.containsKey("progress")) this.progress = ((Number) config.get("progress")).intValue();
+        if(config.containsKey("jobStats")) this.jobStats = new DefaultJobStats((Map) config.get("jobStats"));
+        if(config.containsKey("messages")){
+            List<Map> msgMap = (List<Map>) config.get("messages");
+            for (Map map : msgMap) {
+                getMessages().add(new DefaultMessage(map));
+            }
+        }
+        if(config.containsKey("environment"))this.environment = (Map<String, String>) config.get("environment");
+        if(config.containsKey("configuration"))this.configuration = (Map<String, Object>) config.get("configuration");
+        if(config.containsKey("executeEnvironment"))this.executeEnvironment = new DefaultExecuteEnvironment((Map) config.get("executeEnvironment"));
+    }
+
     @Override
     public String getId() {
         return id;
@@ -132,4 +159,103 @@ public class DefaultJob implements Job{
     public JobStats getJobStats() {
         return jobStats;
     }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setRemoteId(String remoteId) {
+        this.remoteId = remoteId;
+    }
+
+    public void setLog(String log) {
+        this.log = log;
+    }
+
+    public void setErrorLog(String errorLog) {
+        this.errorLog = errorLog;
+    }
+
+    public void setToolName(String toolName) {
+        this.toolName = toolName;
+    }
+
+    public void setExecuteEnvironment(ExecuteEnvironment executeEnvironment) {
+        this.executeEnvironment = executeEnvironment;
+    }
+
+    public void setEnvironment(Map<String, String> environment) {
+        this.environment = environment;
+    }
+
+    public void setConfiguration(Map<String, Object> configuration) {
+        this.configuration = configuration;
+    }
+
+    public void setDependenciesBefore(List<Job> dependenciesBefore) {
+        this.dependenciesBefore = dependenciesBefore;
+    }
+
+    public void setDependenciesAfter(List<Job> dependenciesAfter) {
+        this.dependenciesAfter = dependenciesAfter;
+    }
+
+    public void setProgress(int progress) {
+        this.progress = progress;
+    }
+
+    public void setMessages(List<Message> messages) {
+        this.messages = messages;
+    }
+
+    public void setState(JobState state) {
+        this.state = state;
+    }
+
+    public void setStateReason(String stateReason) {
+        this.stateReason = stateReason;
+    }
+
+    public void setWorkingDirectory(String workingDirectory) {
+        this.workingDirectory = workingDirectory;
+    }
+
+    public void setJobStats(JobStats jobStats) {
+        this.jobStats = jobStats;
+    }
+
+
+    public static Map toMap(Job job){
+        HashMap map = new HashMap();
+        map.put("id", job.getId());
+        map.put("workingDirectory", job.getWorkingDirectory());
+        map.put("toolName", job.getToolName());
+        map.put("stateReason", job.getStateReason());
+        map.put("state", job.getState() == null ? null : job.getState().toString());
+        map.put("progress", job.getProgress());
+
+        ArrayList messageList = new ArrayList();
+        for (Message message : job.getMessages()) {
+            messageList.add(DefaultMessage.toMap(message));
+        }
+        map.put("messages", messageList);
+        if(job.getJobStats() != null) map.put("jobStats", DefaultJobStats.toMap(job.getJobStats()));
+        if(job.getExecuteEnvironment() != null) map.put("executeEnvironment", DefaultExecuteEnvironment.toMap(job.getExecuteEnvironment()));
+        map.put("errorLog", job.getErrorLog());
+        map.put("log", job.getLog());
+        map.put("environment", job.getEnvironment());
+        map.put("configuration", job.getConfiguration());
+        map.put("dependenciesAfter", toDependencyList(job.getDependenciesAfter()));
+        map.put("dependenciesBefore", toDependencyList(job.getDependenciesBefore()));
+        return map;
+    }
+
+    private static List<String> toDependencyList(List<Job> dependencies) {
+        ArrayList<String> list = new ArrayList<String>();
+        for (Job dependency : dependencies) {
+            list.add(dependency.getId());
+        }
+        return list;
+    }
+
 }

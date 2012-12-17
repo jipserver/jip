@@ -1,7 +1,9 @@
 package jip.jobs;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Thasso Griebel <thasso.griebel@gmail.com>
@@ -28,6 +30,42 @@ public class DefaultPipelineJob implements PipelineJob{
         if(id == null) throw new NullPointerException("NULL id not permitted");
         this.id = id;
         this.name = name;
+    }
+
+    /**
+     * Initialize from map
+     *
+     * @param config the configuration
+     */
+    public DefaultPipelineJob(Map config){
+        this.id = (String) config.get("id");
+        this.name = config.containsKey("name") ? (String) config.get("name") : null;
+
+
+        if(config.containsKey("jobs")){
+            List<Map> jobMap = (List<Map>) config.get("jobs");
+            Map<String, DefaultJob> id2job = new HashMap<String, DefaultJob>();
+            for (Map map : jobMap) {
+                DefaultJob jj = new DefaultJob(map);
+                id2job.put(jj.getId(), jj);
+                getJobs().add(jj);
+            }
+            for (Map map : jobMap) {
+                DefaultJob j = id2job.get(map.get("id"));
+                if(map.containsKey("dependenciesBefore")){
+                    List<String> deps = (List<String>) map.get("dependenciesBefore");
+                    for (String dep : deps) {
+                        j.getDependenciesBefore().add(id2job.get(dep));
+                    }
+                }
+                if(map.containsKey("dependenciesAfter")){
+                    List<String> deps = (List<String>) map.get("dependenciesAfter");
+                    for (String dep : deps) {
+                        j.getDependenciesAfter().add(id2job.get(dep));
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -58,5 +96,17 @@ public class DefaultPipelineJob implements PipelineJob{
 
     public void setJobs(List<Job> jobs) {
         this.jobs = jobs;
+    }
+
+    public static Map<String, Object> toMap(PipelineJob job){
+        HashMap map = new HashMap();
+        map.put("id", job.getId());
+        map.put("name", job.getName());
+        ArrayList joblist = new ArrayList();
+        for (Job j : job.getJobs()) {
+            joblist.add(DefaultJob.toMap(j));
+        }
+        map.put("jobs", joblist);
+        return map;
     }
 }

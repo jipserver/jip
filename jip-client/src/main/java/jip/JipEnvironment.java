@@ -1,5 +1,7 @@
 package jip;
 
+import groovy.util.ConfigObject;
+
 import java.io.File;
 
 /**
@@ -16,4 +18,11 @@ public interface JipEnvironment {
      * @return home the jip home
      */
     public File getJipHome(boolean user);
+
+    /**
+     * Get the current JIP configuration
+     *
+     * @return config the current configuration
+     */
+    public ConfigObject getConfiguration();
 }

@@ -21,6 +21,7 @@ package jip.graph;
 
 
 import com.google.common.collect.ArrayListMultimap;
+import groovy.lang.Closure;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DirectedMultigraph;
 import org.jgrapht.traverse.TopologicalOrderIterator;
@@ -232,6 +233,16 @@ public class PipelineGraph {
 
         // handle pipelines of pipelines for JIP-2
         expandPipelineNodes();
+
+        // clean configuration
+        for (JobNode node : getNodes()) {
+            for (String configKey : node.getConfiguration().keySet()) {
+                Object value = node.getConfiguration().get(configKey);
+                if(value instanceof Closure){
+                    node.getConfiguration().put(configKey, ((Closure)value).call(node.getConfiguration()));
+                }
+            }
+        }
     }
 
     /**
@@ -531,6 +542,10 @@ public class PipelineGraph {
         for (JobEdge jobEdge : incoming) {
             if (jobEdge.getType() == JobEdge.Type.Many2One) {
                 Object sourceValue = jobEdge.getValue();
+                if(sourceValue instanceof Closure){
+                    sourceValue = ((Closure)sourceValue).call(findNode(jobEdge.getSourceNode()).getConfiguration());
+                }
+
                 edgeCoveredParameters.add(jobEdge.getTargetProperty());
                 if (sourceValue != null) {
                     for (Object o : toList(sourceValue)) {
@@ -543,6 +558,9 @@ public class PipelineGraph {
         for (JobEdge jobEdge : incoming) {
             if (jobEdge.getType() == JobEdge.Type.Many2One) {
                 Object sourceValue = jobEdge.getValue();
+                if(sourceValue instanceof Closure){
+                    sourceValue = ((Closure)sourceValue).call(findNode(jobEdge.getSourceNode()).getConfiguration());
+                }
                 edgeCoveredParameters.add(jobEdge.getTargetProperty());
                 if (sourceValue != null) {
                     List list = toList(sourceValue);
@@ -608,6 +626,9 @@ public class PipelineGraph {
 
 
             Object value = node.getParameter(parameter.getName());
+            if(value instanceof Closure){
+                value = ((Closure)value).call(node.getConfiguration());
+            }
             if (!edgeCoveredParameters.contains(parameter.getName()) && !parameter.isList() && value != null && value instanceof List) {
                 List list = (List) value;
                 ArrayList flat = new ArrayList(JobEdge.flatten(list));

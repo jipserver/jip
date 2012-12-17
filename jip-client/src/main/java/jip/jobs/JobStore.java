@@ -1,12 +1,13 @@
 package jip.jobs;
 
-import java.util.List;
+import jip.plugin.Extension;
 
 /**
  * Job store implementations persists pipeline runs and jobs
  *
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
+@Extension
 public interface JobStore {
     /**
      * Save the given job. Note that implementations
@@ -15,7 +16,6 @@ public interface JobStore {
      * @param pipelineJob the job
      */
     public void save(PipelineJob pipelineJob);
-
 
     /**
      * Delete the pipeline and all jobs of the pipeline run
@@ -30,11 +30,6 @@ public interface JobStore {
      * @param pipelineJob the job
      */
     public void archive(PipelineJob pipelineJob);
-
-    /**
-     * Create a new ID
-     */
-    public String createId();
 
     /**
      * Find a single job

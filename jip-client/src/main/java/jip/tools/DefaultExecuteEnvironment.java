@@ -23,6 +23,12 @@ public class DefaultExecuteEnvironment implements ExecuteEnvironment{
      */
     private long maxTime;
 
+    public DefaultExecuteEnvironment() {
+        this.threads = 1;
+        this.maxMemory = 0;
+        this.maxTime = 0;
+    }
+
     @Override
     public int getThreads() {
         return threads;

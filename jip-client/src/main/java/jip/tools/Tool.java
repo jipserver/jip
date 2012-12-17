@@ -1,5 +1,6 @@
 package jip.tools;
 
+import groovy.lang.Closure;
 import jip.plugin.ExtensionPoint;
 
 import java.io.File;
@@ -77,5 +78,12 @@ public interface Tool {
      * @return the tools default execute environment
      */
     ExecuteEnvironment getExecuteEnvironment();
+
+    /**
+     * If this tool defines a pipeline, return the pipeline closure
+     *
+     * @return closure the pipeline closure
+     */
+    Closure getPipeline();
 
 }

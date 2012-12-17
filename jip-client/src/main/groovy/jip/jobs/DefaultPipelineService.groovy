@@ -77,7 +77,7 @@ class DefaultPipelineService implements PipelineService{
 
         // create jobs
         for (JobNode node : graph.getNodes()) {
-            DefaultJob jobInstance = new DefaultJob("${node.getNodeId()}", cwd.getAbsolutePath())
+            DefaultJob jobInstance = new DefaultJob(pipelineRunId, "${node.getNodeId()}", cwd.getAbsolutePath())
             jobInstance.setConfiguration(node.getConfiguration())
             jobInstance.setToolName(node.getPipelineJob().getToolId())
             jobs[node.getNodeId()] = jobInstance

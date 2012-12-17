@@ -13,6 +13,13 @@ import java.util.Map;
 public interface Job {
 
     /**
+     * Get the pipeline id of this job
+     *
+     * @return id pipeline id
+     */
+    public String getPipelineId();
+
+    /**
      * Get the JIP id for this job
      *
      * @return id the jip job id
@@ -125,4 +132,23 @@ public interface Job {
      * @return stat the job stats
      */
     public JobStats getJobStats();
+
+    /**
+     * Set the path to the log file
+     * @param log path to the log file
+     */
+    public void setLog(String log);
+
+    /**
+     * Set the path to the error log file
+     * @param log path to the error log file
+     */
+    public void setErrorLog(String log);
+
+    /**
+     * Set the remote id
+     *
+     * @param remoteId the remote id
+     */
+    public void setRemoteId(String remoteId);
 }

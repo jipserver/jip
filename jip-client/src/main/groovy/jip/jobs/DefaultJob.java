@@ -12,7 +12,9 @@ import java.util.Map;
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
 public class DefaultJob implements Job{
+
     private String id;
+    private String pipelineId;
     private String remoteId;
     private String log;
     private String errorLog;
@@ -29,7 +31,8 @@ public class DefaultJob implements Job{
     private String workingDirectory;
     private JobStats jobStats;
 
-    public DefaultJob(String id, String workingDirectory) {
+    public DefaultJob(String pipelineId, String id, String workingDirectory) {
+        this.pipelineId = pipelineId;
         this.id = id;
         this.workingDirectory = workingDirectory;
         this.jobStats = new DefaultJobStats();
@@ -44,6 +47,7 @@ public class DefaultJob implements Job{
         this.id = (String) config.get("id");
         this.workingDirectory = (String) config.get("workingDirectory");
         if(config.containsKey("remoteId")) this.remoteId = (String) config.get("remoteId");
+        if(config.containsKey("pipelineId")) this.pipelineId = (String) config.get("pipelineId");
         if(config.containsKey("log")) this.log = (String) config.get("log");
         if(config.containsKey("errorLog")) this.errorLog = (String) config.get("errorLog");
         if(config.containsKey("toolName")) this.toolName = (String) config.get("toolName");
@@ -65,6 +69,11 @@ public class DefaultJob implements Job{
     @Override
     public String getId() {
         return id;
+    }
+
+    @Override
+    public String getPipelineId() {
+        return pipelineId;
     }
 
     @Override

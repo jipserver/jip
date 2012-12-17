@@ -110,4 +110,36 @@ class FileJobStoreTest {
         assert loaded.getJobs().get(3).environment == pipelineJob.getJobs().get(3).environment
 
     }
+    @Test
+    public void testIteratoringJobs() throws Exception {
+        def pp = new DefaultPipelineService(context, idservice)
+        def store = new FileJobStore(dir)
+        for(int i =0; i< 100; i++){
+            PipelineJob pipelineJob = pp.create("split-wc", [:], dir)
+            store.save(pipelineJob)
+        }
+        int c = 0;
+        for (PipelineJob job : store.list(false)) {
+            c++;
+            store.archive(job);
+        }
+        assert c == 100;
+        c = 0;
+        for (PipelineJob job : store.list(true)) {
+            c++;
+            store.delete(job);
+        }
+        assert c == 100;
+
+        c = 0;
+        for (PipelineJob job : store.list(false)) {
+            c++;
+        }
+        assert c == 0;
+        c = 0;
+        for (PipelineJob job : store.list(true)) {
+            c++;
+        }
+        assert c == 0;
+    }
 }

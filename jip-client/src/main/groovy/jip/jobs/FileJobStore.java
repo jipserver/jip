@@ -1,5 +1,6 @@
 package jip.jobs;
 
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import jip.JipEnvironment;
@@ -13,10 +14,7 @@ import java.nio.LongBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Plain text job store for pipeline jobs.
@@ -33,6 +31,10 @@ public class FileJobStore implements JobStore{
      * The directory used to store files
      */
     private File storageDirectory;
+    /**
+     * the archive directory
+     */
+    private File archiveDirectory;
 
     /**
      * Create a new instance of the job store.
@@ -45,9 +47,15 @@ public class FileJobStore implements JobStore{
      */
     public FileJobStore(File storageDirectory) {
         this.storageDirectory = storageDirectory;
+        this.archiveDirectory = new File(storageDirectory.getParentFile(), "archive");
         if(!this.storageDirectory.exists()){
             if(!this.storageDirectory.mkdirs()){
                 log.error("Unable to create job store directory");
+            }
+        }
+        if(!this.archiveDirectory.exists()){
+            if(!this.archiveDirectory.mkdirs()){
+                log.error("Unable to create job store archive directory");
             }
         }
     }
@@ -73,7 +81,7 @@ public class FileJobStore implements JobStore{
         FileChannel channel = null;
         try {
             // Get a file channel for the file
-            RandomAccessFile rw = new RandomAccessFile(new File(storageDirectory, pipelineJob.getId()+".job"), "rw");
+            RandomAccessFile rw = new RandomAccessFile(getJobFile(pipelineJob, false), "rw");
             channel = rw.getChannel();
             // Use the file channel to create a lock on the file.
             // This method blocks until it can retrieve the lock.
@@ -98,14 +106,33 @@ public class FileJobStore implements JobStore{
 
     }
 
+    private File getJobFile(PipelineJob pipelineJob, boolean archive) {
+        return new File(archive ? archiveDirectory : storageDirectory, pipelineJob.getId()+".job");
+    }
+
     @Override
     public void delete(PipelineJob pipelineJob) {
-
+        File jobFile = getJobFile(pipelineJob, false);
+        if(jobFile.exists()){
+            jobFile.delete();
+        }else{
+            jobFile = getJobFile(pipelineJob, true);
+            if(jobFile.exists()){
+                jobFile.delete();
+            }
+        }
     }
 
     @Override
     public void archive(PipelineJob pipelineJob) {
-
+        File jobFile = getJobFile(pipelineJob, false);
+        if(jobFile.exists()){
+            try {
+                Files.move(jobFile, getJobFile(pipelineJob, true));
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to move job file to archive !");
+            }
+        }
     }
 
     @Override
@@ -115,7 +142,12 @@ public class FileJobStore implements JobStore{
         try {
             // Get a file channel for the file
             File file = new File(storageDirectory, id + ".job");
-            if(!file.exists()) return null;
+            if(!file.exists()){
+                file = new File(archiveDirectory, id + ".job");
+            }
+            if(!file.exists()){
+                throw new RuntimeException("Job " + id + " not found !");
+            }
 
             RandomAccessFile rw = new RandomAccessFile(file, "rw");
             channel = rw.getChannel();
@@ -145,7 +177,45 @@ public class FileJobStore implements JobStore{
 
     @Override
     public Iterable<PipelineJob> list(boolean archived) {
-        return null;
+        File[] files = (archived ? archiveDirectory : storageDirectory).listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.getName().endsWith(".job");
+            }
+        });
+        return new JobIterable(files);
     }
 
+    private class JobIterable implements Iterable<PipelineJob>, Iterator<PipelineJob> {
+        private List<File> files;
+        private final Iterator<File> iterator;
+
+        public JobIterable(File[] files) {
+            this.files = new ArrayList<File>(Arrays.asList(files));
+            Collections.sort(this.files);
+            this.iterator = this.files.iterator();
+        }
+
+        @Override
+        public Iterator<PipelineJob> iterator() {
+            return this;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return iterator.hasNext();
+        }
+
+        @Override
+        public PipelineJob next() {
+            String name = iterator.next().getName();
+            String id = name.substring(0, name.length() - 4);
+            return get(id);
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
+    }
 }

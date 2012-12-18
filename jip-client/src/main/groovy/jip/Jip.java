@@ -15,6 +15,9 @@ import jip.plugin.PluginBootstrapper;
 import jip.plugin.PluginRegistry;
 import jip.tools.ToolService;
 import jip.utils.SimpleTablePrinter;
+import net.sourceforge.argparse4j.ArgumentParsers;
+import net.sourceforge.argparse4j.inf.ArgumentParser;
+import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import org.apache.log4j.*;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
@@ -30,6 +33,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
+import static net.sourceforge.argparse4j.impl.Arguments.storeTrue;
 
 /**
  * JIP Client main class
@@ -136,63 +141,77 @@ public class Jip implements JipEnvironment{
         JipCommandService commandService = injector.getInstance(JipCommandService.class);
         this.toolService = injector.getInstance(ToolService.class);
 
-        JSAP jsap = createOptions(commandService);
-
-        JSAPResult options = jsap.parse(args);
-        if(options.userSpecified("version")){
-            showUsage(jsap);
+        ArgumentParser argparser = createOptions(commandService);
+        try {
+            argparser.parseArgs(args);
+        } catch (ArgumentParserException e) {
+            argparser.handleError(e);
             System.exit(1);
         }
 
-        if(args.length < 1){
-            System.err.println("No command specified");
-            showUsage(jsap);
-        }else{
-            String command = args[0];
-            String[] rest = new String[]{};
-            if(args.length > 1){
-                rest = new String[args.length-1];
-                System.arraycopy(args,1, rest, 0, args.length-1);
-            }
-            JipCommand jipCommand = commandService.get(command);
-            if(jipCommand == null){
-                log.error("Command {} not found !");
-                showUsage(jsap);
-            }
-            jipCommand.run(rest);
-        }
+
+//        JSAPResult options = jsap.parse(args);
+//        if(options.userSpecified("version")){
+//            showUsage(jsap);
+//            System.exit(1);
+//        }
+//
+//        if(args.length < 1){
+//            System.err.println("No command specified");
+//            showUsage(jsap);
+//        }else{
+//            String command = args[0];
+//            String[] rest = new String[]{};
+//            if(args.length > 1){
+//                rest = new String[args.length-1];
+//                System.arraycopy(args,1, rest, 0, args.length-1);
+//            }
+//            JipCommand jipCommand = commandService.get(command);
+//            if(jipCommand == null){
+//                log.error("Command {} not found !");
+//                showUsage(jsap);
+//            }
+//            jipCommand.run(rest);
+//        }
     }
 
     /**
      * Create the command line options
      *
+     *
      * @param commandService the command service to list available commands
      * @return options command line options
      */
-    JSAP createOptions(JipCommandService commandService) {
-        JSAP jsap = new JSAP();
-        try {
-
-            jsap.registerParameter(CLIHelper.switchParameter("help", 'h').help("Show the help message").get());
-            jsap.registerParameter(CLIHelper.switchParameter("version", 'v').help("Show version information").get());
-            jsap.registerParameter(CLIHelper.unflaggedParameter("command").help("The JIP command to run").required().get());
-
-            jsap.setUsage("jip ");
-            StringBuilder helpBuilder = new StringBuilder("JIP command line tools can be used to interact with jip.\n" +
-                    "The following commands are supported:\n");
-            helpBuilder.append("\n");
-            SimpleTablePrinter table = new SimpleTablePrinter(Arrays.asList("Command", "Description"));
-            for (JipCommand jipCommand : commandService.getCommands()) {
-                String shortDescription = jipCommand.getShortDescription();
-                if(shortDescription == null) shortDescription = "";
-                table.addRow(jipCommand.getCommandName(), shortDescription);
-            }
-            helpBuilder.append(table);
-            jsap.setHelp(helpBuilder.toString());
-        } catch (JSAPException e) {
-            throw new RuntimeException(e);
-        }
-        return jsap;
+    ArgumentParser createOptions(JipCommandService commandService) {
+        ArgumentParser args = ArgumentParsers.newArgumentParser("jip", true);
+        args.addArgument("-v", "--version").action(storeTrue()).help("Show version information");
+        return args;
+//        args.
+//
+//
+//        JSAP jsap = new JSAP();
+//        try {
+//
+//            jsap.registerParameter(CLIHelper.switchParameter("help", 'h').help("Show the help message").get());
+//            jsap.registerParameter(CLIHelper.switchParameter("version", 'v').help("Show version information").get());
+//            jsap.registerParameter(CLIHelper.unflaggedParameter("command").help("The JIP command to run").required().get());
+//
+//            jsap.setUsage("jip ");
+//            StringBuilder helpBuilder = new StringBuilder("JIP command line tools can be used to interact with jip.\n" +
+//                    "The following commands are supported:\n");
+//            helpBuilder.append("\n");
+//            SimpleTablePrinter table = new SimpleTablePrinter(Arrays.asList("Command", "Description"));
+//            for (JipCommand jipCommand : commandService.getCommands()) {
+//                String shortDescription = jipCommand.getShortDescription();
+//                if(shortDescription == null) shortDescription = "";
+//                table.addRow(jipCommand.getCommandName(), shortDescription);
+//            }
+//            helpBuilder.append(table);
+//            jsap.setHelp(helpBuilder.toString());
+//        } catch (JSAPException e) {
+//            throw new RuntimeException(e);
+//        }
+//        return jsap;
     }
 
 

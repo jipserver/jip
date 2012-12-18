@@ -1,0 +1,26 @@
+          JJJJJJJJJJJ     IIIIIIIIII     PPPPPPPPPPPPPPPPP
+          J:::::::::J     I::::::::I     P::::::::::::::::P
+          J:::::::::J     I::::::::I     P::::::PPPPPP:::::P
+          JJ:::::::JJ     II::::::II     PP:::::P     P:::::P
+            J:::::J         I::::I         P::::P     P:::::P
+            J:::::J         I::::I         P::::P     P:::::P
+            J:::::J         I::::I         P::::PPPPPP:::::P
+            J:::::j         I::::I         P:::::::::::::PP
+            J:::::J         I::::I         P::::PPPPPPPPP
+JJJJJJJ     J:::::J         I::::I         P::::P
+J:::::J     J:::::J         I::::I         P::::P
+J::::::J   J::::::J         I::::I         P::::P
+J:::::::JJJ:::::::J       II::::::II     PP::::::PP
+ JJ:::::::::::::JJ        I::::::::I     P::::::::P
+   JJ:::::::::JJ          I::::::::I     P::::::::P
+     JJJJJJJJJ            IIIIIIIIII     PPPPPPPPPP
+    ...............................-= JIP Pipeline System =-.
+    - JIP ${version}
+    -
+    - Reports Bugs and Issues at
+    -
+    - http://grape-pipeline.org/jira
+    ........./=- License -=\..........
+    . JIP and the jip source code is .
+    . licensed under GPL             .
+    ..................................

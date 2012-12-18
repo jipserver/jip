@@ -125,15 +125,15 @@ public class PluginBootstrapper {
      */
     public Injector bootstrap(boolean addShutdownHooks) throws Exception{
         Injector boostrapInjector = Guice.createInjector();
-        log.debug("Loading plugins");
+        log.info("Loading plugins");
         plugins = loadPlugins(boostrapInjector);
-        log.debug("Loaded plugins : " + plugins.size() + " plugins");
-        log.debug("Loading configuration");
+        log.info("Loaded plugins : " + plugins.size() + " plugins");
+        log.info("Loading configuration");
         extendWithPluginProperties(plugins);
         extendFromFile();
         extendFromSystem();
         extendFromProvided();
-        log.debug("Loaded configuration : " +properties.size() + " entries");
+        log.info("Loaded configuration : " +properties.size() + " entries");
         log.debug("------------------ JIP Server and System Properties ------------------");
         List<String> propertynames = new ArrayList<String>(getProperties().stringPropertyNames());
         Collections.sort(propertynames);
@@ -151,7 +151,7 @@ public class PluginBootstrapper {
         // update the plugins with the instances from the new injector
 //        plugins = loadPlugins(scope, mainInjector);
 
-        log.debug("Injecting dependencies to plugins");
+        log.info("Injecting dependencies to plugins");
         for (Plugin plugin : plugins) {
             mainInjector.injectMembers(plugin);
         }
@@ -187,7 +187,7 @@ public class PluginBootstrapper {
         BoostrapException boostrapException = new BoostrapException("Plugin startup failed", new ArrayList<Exception>(), new ArrayList<Plugin>());
         for (Plugin plugin : plugins) {
             try {
-                log.debug("Starting plugin : " + plugin.getName());
+                log.info("Starting plugin : " + plugin.getName());
                 plugin.start();
             } catch (Exception e) {
                 log.error("Error while starting plugin "+plugin.getName() + " : " +e.getMessage());
@@ -248,7 +248,7 @@ public class PluginBootstrapper {
      */
     protected void extendWithPluginProperties(Set<Plugin> plugins) {
         for (Plugin plugin : plugins) {
-            log.debug("Loading configuration for " +plugin.getName());
+            log.info("Loading configuration for " +plugin.getName());
             String key = plugin.getKey();
             if(key == null || key.isEmpty()){
                 log.error("Plugin "+ plugin.getName() + " has a null or empty key ! This is not permitted !");
@@ -397,9 +397,9 @@ public class PluginBootstrapper {
         public void initialize(){
             Reflections reflections = ReflectionUtils.get();
             extensionPoints = reflections.getTypesAnnotatedWith(ExtensionPoint.class, true);
-            log.debug("Bootstrap registry : found " + extensionPoints.size() + " extension points");
+            log.info("Bootstrap registry : found " + extensionPoints.size() + " extension points");
             Set<Class<?>> extensions = reflections.getTypesAnnotatedWith(Extension.class, true);
-            log.debug("Bootstrap registry : found " + extensions.size() + " extensions");
+            log.info("Bootstrap registry : found " + extensions.size() + " extensions");
             this.extensions = ArrayListMultimap.create();
             // map extensions to extension points
             for (Class<?> extension : extensions) {
@@ -414,7 +414,7 @@ public class PluginBootstrapper {
                     log.warn("No extension point found for " + extension.getName());
                 }
             }
-            log.debug("Bootstrap registry : " + this.extensions.size() + " extensions registered");
+            log.info("Bootstrap registry : " + this.extensions.size() + " extensions registered");
         }
 
         /**

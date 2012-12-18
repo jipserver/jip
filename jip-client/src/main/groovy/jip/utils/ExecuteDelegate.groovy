@@ -1,9 +1,8 @@
 package jip.utils
 
-import com.sun.tools.example.debug.bdi.MethodNotFoundException
 import jip.tools.Tool
 
-import java.lang.ProcessBuilder
+
 
 /**
  * A delegate that provides helpers to run scripts
@@ -50,7 +49,7 @@ class ExecuteDelegate {
     }
 
     def methodMissing(String name, def args) {
-        if (args == null || args.size() == 0) throw new MethodNotFoundException(name + " not found");
+        if (args == null || args.size() == 0) throw new NoSuchMethodError(name + " not found");
         Map cfg = [:]
         for (int i = 0; i < args.length; i++) {
             if (args[i] instanceof Map) cfg.putAll(args[i])

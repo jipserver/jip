@@ -4,7 +4,7 @@ import com.google.common.io.Files;
 import com.google.inject.Inject;
 import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPResult;
-import jip.JSAPHelper;
+import jip.CLIHelper;
 import jip.JipEnvironment;
 import jip.plugin.Extension;
 import jip.tools.JipContext;
@@ -67,17 +67,17 @@ public class ToolsCommand implements JipCommand{
         JSAP options = null;
         try {
             options = new JSAP();
-            options.registerParameter(JSAPHelper.switchParameter("help", 'h').required().help("Show help message").get());
-            options.registerParameter(JSAPHelper.flaggedParameter("show", 's').help("Show selected tools").get());
-            options.registerParameter(JSAPHelper.flaggedParameter("install", 'i').valueName("url").help("Install selected tool").get());
-            options.registerParameter(JSAPHelper.switchParameter("user").help("Install into user home").get());
+            options.registerParameter(CLIHelper.switchParameter("help", 'h').required().help("Show help message").get());
+            options.registerParameter(CLIHelper.flaggedParameter("show", 's').help("Show selected tools").get());
+            options.registerParameter(CLIHelper.flaggedParameter("install", 'i').valueName("url").help("Install selected tool").get());
+            options.registerParameter(CLIHelper.switchParameter("user").help("Install into user home").get());
         } catch (Exception e) {
             log.error("Error while creating options : {}", e.getMessage());
             throw new RuntimeException(e);
         }
         JSAPResult input = options.parse(args);
         if(input.userSpecified("help") || !input.success()){
-            JSAPHelper.printCommandError(getCommandName(), options, input);
+            CLIHelper.printCommandError(getCommandName(), options, input);
             System.exit(1);
         }
 

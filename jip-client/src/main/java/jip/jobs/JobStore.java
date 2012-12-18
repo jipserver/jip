@@ -1,13 +1,13 @@
 package jip.jobs;
 
-import jip.plugin.Extension;
+import jip.plugin.ExtensionPoint;
 
 /**
  * Job store implementations persists pipeline runs and jobs
  *
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
-@Extension
+@ExtensionPoint
 public interface JobStore {
     /**
      * Save the given job. Note that implementations

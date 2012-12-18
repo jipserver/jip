@@ -1,9 +1,13 @@
 package jip;
 
+import com.google.common.io.Files;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.martiansoftware.jsap.JSAP;
 import com.martiansoftware.jsap.JSAPException;
+import com.martiansoftware.jsap.JSAPResult;
+import groovy.text.GStringTemplateEngine;
+import groovy.text.Template;
 import groovy.util.ConfigObject;
 import jip.commands.JipCommand;
 import jip.commands.JipCommandService;
@@ -11,18 +15,20 @@ import jip.plugin.PluginBootstrapper;
 import jip.plugin.PluginRegistry;
 import jip.tools.ToolService;
 import jip.utils.SimpleTablePrinter;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.RollingFileAppender;
+import org.apache.log4j.*;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URL;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -45,6 +51,10 @@ public class Jip implements JipEnvironment{
      * The current configuration
      */
     private ConfigObject configuration;
+    /**
+     * The plugin registry
+     */
+    private PluginRegistry pluginRegistry;
 
     /**
      * Get the JIP directory, wither global or user specific
@@ -54,7 +64,11 @@ public class Jip implements JipEnvironment{
      */
     public File getJipHome(boolean user){
         if(!user){
-            return new File(System.getProperty("jip.home"));
+            String property = System.getProperty("jip.home");
+            if(property == null){
+                property = ".";
+            }
+            return new File(property);
         }else{
             return new File(System.getProperty("user.home") + "/.jip");
         }
@@ -77,6 +91,19 @@ public class Jip implements JipEnvironment{
         new Jip().run(args);
     }
 
+    /**
+     * Access the plugin registry
+     * @return
+     */
+    public PluginRegistry getPluginRegistry() {
+        return pluginRegistry;
+    }
+
+    /**
+     * Run the JIP client
+     *
+     * @param args the command line arguments
+     */
     void run(String[] args) {
         Properties properties = new Properties();
         String userHome = System.getProperty("user.home") + "/.jip";
@@ -87,14 +114,14 @@ public class Jip implements JipEnvironment{
         properties.setProperty("jip.user.home", userHome);
 
         try {
-            configureLogger(new File(userHome));
+            configureLogger(getConfiguration());
         } catch (IOException e) {
             log.error("Error while initializing logging system : {}", e.getMessage());
         }
 
         log.debug("JIP home: {}", jipHome);
         log.debug("JIP user dir: {}", userHome);
-        log.debug("Starting plugin system");
+        log.info("Starting plugin system");
         PluginBootstrapper pluginBootstrapper = new PluginBootstrapper(properties, new File(userHome, "jip.cfg"), Arrays.<Module>asList(new JipModule(this)));
         Injector injector = null;
         try {
@@ -105,32 +132,20 @@ public class Jip implements JipEnvironment{
             throw new RuntimeException("Failed to start plugin system", e);
         }
 
-        final PluginRegistry pluginRegistry = injector.getInstance(PluginRegistry.class);
+        pluginRegistry = injector.getInstance(PluginRegistry.class);
         JipCommandService commandService = injector.getInstance(JipCommandService.class);
         this.toolService = injector.getInstance(ToolService.class);
 
-        JSAP jsap = new JSAP();
-        try {
-            jsap.registerParameter(JSAPHelper.switchParameter("help", 'h').help("Show the help message").get());
-            jsap.registerParameter(JSAPHelper.unflaggedParameter("command").help("The JIP command to run").required().get());
-            jsap.setUsage("jip <command> [-h|--help]");
-            StringBuilder helpBuilder = new StringBuilder("JIP command line tools can be used to interact with jip.\n" +
-                    "The following commands are supported:\n");
-            helpBuilder.append("\n");
-            SimpleTablePrinter table = new SimpleTablePrinter(Arrays.asList("Command", "Description"));
-            for (JipCommand jipCommand : commandService.getCommands()) {
-                String shortDescription = jipCommand.getShortDescription();
-                if(shortDescription == null) shortDescription = "";
-                table.addRow(jipCommand.getCommandName(), shortDescription);
-            }
-            helpBuilder.append(table);
-            jsap.setHelp(helpBuilder.toString());
-        } catch (JSAPException e) {
-            throw new RuntimeException(e);
+        JSAP jsap = createOptions(commandService);
+
+        JSAPResult options = jsap.parse(args);
+        if(options.userSpecified("version")){
+            showUsage(jsap);
+            System.exit(1);
         }
 
         if(args.length < 1){
-            log.error("No arguments specified");
+            System.err.println("No command specified");
             showUsage(jsap);
         }else{
             String command = args[0];
@@ -148,6 +163,57 @@ public class Jip implements JipEnvironment{
         }
     }
 
+    /**
+     * Create the command line options
+     *
+     * @param commandService the command service to list available commands
+     * @return options command line options
+     */
+    JSAP createOptions(JipCommandService commandService) {
+        JSAP jsap = new JSAP();
+        try {
+
+            jsap.registerParameter(CLIHelper.switchParameter("help", 'h').help("Show the help message").get());
+            jsap.registerParameter(CLIHelper.switchParameter("version", 'v').help("Show version information").get());
+            jsap.registerParameter(CLIHelper.unflaggedParameter("command").help("The JIP command to run").required().get());
+
+            jsap.setUsage("jip ");
+            StringBuilder helpBuilder = new StringBuilder("JIP command line tools can be used to interact with jip.\n" +
+                    "The following commands are supported:\n");
+            helpBuilder.append("\n");
+            SimpleTablePrinter table = new SimpleTablePrinter(Arrays.asList("Command", "Description"));
+            for (JipCommand jipCommand : commandService.getCommands()) {
+                String shortDescription = jipCommand.getShortDescription();
+                if(shortDescription == null) shortDescription = "";
+                table.addRow(jipCommand.getCommandName(), shortDescription);
+            }
+            helpBuilder.append(table);
+            jsap.setHelp(helpBuilder.toString());
+        } catch (JSAPException e) {
+            throw new RuntimeException(e);
+        }
+        return jsap;
+    }
+
+
+    void showVersion(){
+        GStringTemplateEngine engine = new GStringTemplateEngine();
+        try {
+            Template template = engine.createTemplate(getClass().getResource("/cli/version.txt"));
+            HashMap binding = new HashMap();
+            binding.put("version", "Development");
+            URL versionResource = getClass().getResource("jip-client-build.properties");
+            if(versionResource != null){
+                Properties versionInfo = new Properties();
+                versionInfo.load(versionResource.openStream());
+                binding.put("version", versionInfo.getProperty("library.version", "Development"));
+            }
+            template.make(binding).writeTo(new PrintWriter(System.err));
+        } catch (Exception e) {
+            System.err.println("That is embarrassing, I cant find the version information. Sorry.");
+        }
+
+    }
     private void showUsage(JSAP jsap) {
         System.err.println();
         System.err.println(jsap.getUsage());
@@ -156,9 +222,17 @@ public class Jip implements JipEnvironment{
         System.exit(1);
     }
 
-    static void configureLogger(File baseDirectory) throws IOException {
-        File logDir = new File(baseDirectory, "logs");
+    static void configureLogger(ConfigObject config) throws IOException {
+        Map allFlat = config.flatten();
+        Object logFileInConfig = allFlat.get("jip.logging.logfile");
 
+        if(logFileInConfig == null){
+            System.err.println("No logfile specified !");
+            return;
+        }
+        File logfile = new File(logFileInConfig.toString());
+
+        File logDir = logfile.getParentFile();
         if(!logDir.exists() && !logDir.mkdirs()){
             System.err.println("Unable to create log directory !");
             return;
@@ -170,25 +244,22 @@ public class Jip implements JipEnvironment{
         }
 
         // configure log4j
-        PatternLayout logLayout = new PatternLayout("[%-5p] [%t] [%d{dd MMM yyyy HH:mm:ss,SSS}] [%c{2}] : %m%n");
+        PatternLayout logLayout = new PatternLayout(allFlat.get("jip.logging.pattern").toString());
         org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
-        // get rid of teh reflections errors
-        org.apache.log4j.Logger.getLogger(Reflections.class).setLevel(Level.FATAL);
+        // get rid of the reflections errors
+        //org.apache.log4j.Logger.getLogger(Reflections.class).setLevel(Level.FATAL);
 
+        Map logging = ((ConfigObject)((ConfigObject)config.get("jip")).get("logging")).flatten();
+        Properties loggingProperties = new Properties();
+        loggingProperties.putAll(logging);
+
+        PropertyConfigurator.configure(loggingProperties);
         rootLogger.removeAllAppenders();
         rootLogger.addAppender(new RollingFileAppender(
                 logLayout,
-                new File(logDir, "jip.log").getAbsolutePath(),
+                logfile.getAbsolutePath(),
                 true
         ));
-        if(System.getProperty("jip.debug") != null){
-            ConsoleAppender appender = new ConsoleAppender(new PatternLayout("[%-5p] [%t] [%d{dd MMM yyyy HH:mm:ss,SSS}] [%c{2}] : %m%n"));
-            rootLogger.addAppender(appender);
-            rootLogger.setLevel(Level.toLevel(System.getProperty("jip.debug")));
-        }else{
-            rootLogger.addAppender(new ConsoleAppender(new PatternLayout("%m%n")));
-        }
         SLF4JBridgeHandler.install();
-        rootLogger.setLevel(Level.INFO);
     }
 }

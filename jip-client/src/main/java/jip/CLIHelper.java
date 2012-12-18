@@ -7,10 +7,14 @@ import java.math.BigDecimal;
 
 /**
  * Helper class to create JSAP parameters with a builder pattern
+ * and help with the command line parsing
  *
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
-public class JSAPHelper {
+public class CLIHelper {
+    /**
+     * JSAP String stirng to file parser
+     */
     private static StringParser FILE_PARSER = new StringParser() {
         @Override
         public Object parse(String s) throws ParseException {
@@ -18,6 +22,11 @@ public class JSAPHelper {
         }
     };
 
+    /**
+     * Print error message
+     * @param options options
+     * @param config parser result
+     */
     public static void printError(JSAP options, JSAPResult config){
         System.err.println();
         for (java.util.Iterator errs = config.getErrorMessageIterator();
@@ -31,6 +40,13 @@ public class JSAPHelper {
         System.err.println(options.getHelp());
     }
 
+    /**
+     * Print command error
+     *
+     * @param command the command
+     * @param options the options
+     * @param config the parser results
+     */
     public static void printCommandError(String command, JSAP options, JSAPResult config){
         System.err.println();
         for (java.util.Iterator errs = config.getErrorMessageIterator();

@@ -6,7 +6,27 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A JIP job references a single job in a pipeline run
+ *  Implementations of this interface are jobs that
+ *  reference a tool (the actual executable) and
+ *  carry information about a tool run.
+ *  <p>
+ *      This interface exists as the bases for a
+ *      job storage that persists job information.
+ *  </p>
+ *  <p>
+ *      Jobs are part of a pipeline and if
+ *      that is the case, the pipeline id has to be
+ *      referenced here. The pipeline id is the main
+ *      entrance point for job communication and
+ *      is needed to identify the pipeline that stores
+ *      this job.
+ *  </p>
+ *  <p>
+ *      If jobs are submitted to a cluster, the remote
+ *      id is set and can be used to identify the remote
+ *      job on the compute cluster.
+ *  </p>
+ *
  *
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */

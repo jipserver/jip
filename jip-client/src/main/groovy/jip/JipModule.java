@@ -32,16 +32,13 @@ public class JipModule extends AbstractModule{
         bind(JipEnvironment.class).toInstance(jip);
         bind(ToolService.class).to(DefaultToolService.class).in(Scopes.SINGLETON);
         bind(IdService.class).toProvider(new Provider<IdService>() {
-            @Inject
-            PluginRegistry pluginRegistry;
-
             @Override
             public IdService get() {
                 Object className = cfg(cfg(jip.getConfiguration(), "jobs"), "idservice").get("service");
                 if (className == null) {
                     className = "jip.jobs.FileIdService";
                 }
-                Set<IdService> services = pluginRegistry.getInstances(IdService.class);
+                Set<IdService> services = jip.getPluginRegistry().getInstances(IdService.class);
                 for (IdService service : services) {
                     if(service.getClass().getName().equals(className.toString())){
                         return service;

@@ -2,9 +2,8 @@ package jip.commands;
 
 import com.google.inject.Inject;
 import com.martiansoftware.jsap.JSAP;
-import com.martiansoftware.jsap.JSAPException;
 import com.martiansoftware.jsap.JSAPResult;
-import jip.JSAPHelper;
+import jip.CLIHelper;
 import jip.plugin.Extension;
 import jip.tools.Parameter;
 import jip.tools.Tool;
@@ -58,15 +57,15 @@ public class RunCommand implements JipCommand{
         JSAP options = null;
         try {
             options = new JSAP();
-            options.registerParameter(JSAPHelper.switchParameter("help", 'h').required().help("Show help message").get());
-            options.registerParameter(JSAPHelper.flaggedParameter("tool", 't').required().help("Select the tool to run").get());
+            options.registerParameter(CLIHelper.switchParameter("help", 'h').required().help("Show help message").get());
+            options.registerParameter(CLIHelper.flaggedParameter("tool", 't').required().help("Select the tool to run").get());
         } catch (Exception e) {
             log.error("Error while creating options : {}", e.getMessage());
             throw new RuntimeException(e);
         }
         JSAPResult input = options.parse(args);
         if(input.userSpecified("help")){
-            JSAPHelper.printCommandError(getCommandName(), options, input);
+            CLIHelper.printCommandError(getCommandName(), options, input);
             System.exit(1);
         }
 
@@ -89,7 +88,7 @@ public class RunCommand implements JipCommand{
 
         }
         if(toolName == null || rest == null){
-            JSAPHelper.printCommandError(getCommandName(), options, input);
+            CLIHelper.printCommandError(getCommandName(), options, input);
             System.exit(1);
         }
 
@@ -130,7 +129,7 @@ public class RunCommand implements JipCommand{
         JSAP toolArgParser = new JSAP();
         for (Map.Entry<String, Parameter> entry : tool.getParameter().entrySet()) {
             String name = entry.getKey();
-            JSAPHelper.FlaggedParameterBuilder pp = JSAPHelper.flaggedParameter(name);
+            CLIHelper.FlaggedParameterBuilder pp = CLIHelper.flaggedParameter(name);
             if(entry.getValue().isList()){
                 pp.list();
             }

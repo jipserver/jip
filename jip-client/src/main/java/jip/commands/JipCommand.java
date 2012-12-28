@@ -1,6 +1,7 @@
 package jip.commands;
 
 import jip.plugin.ExtensionPoint;
+import net.sourceforge.argparse4j.inf.Subparser;
 
 /**
  * CLI command interface extension point to define commands that can be triggered
@@ -38,5 +39,10 @@ public interface JipCommand {
      */
     void run(String[] args);
 
-
+    /**
+     * Add arguments to the command line parser
+     *
+     * @param parser the parser
+     */
+    void populateParser(Subparser parser);
 }

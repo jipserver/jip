@@ -65,31 +65,49 @@ public class PluginRegistryImpl implements PluginRegistry {
         this.injector = injector;
     }
 
+    public PluginRegistryImpl(Injector injector, PluginRegistry source) {
+        this(injector);
+        this.extensions = source.getExtensions();
+        this.extensionPoints = source.getExtensionPoints();
+    }
+
+    @Override
+    public Set<Class<?>> getExtensionPoints() {
+        return extensionPoints;
+    }
+
+    @Override
+    public Multimap<Class, Class> getExtensions() {
+        return extensions;
+    }
+
     /**
      * Search for extension points and extensions and initialize the registry
      */
     public void initialize(){
-        Reflections reflections = ReflectionUtils.get();
-        extensionPoints = reflections.getTypesAnnotatedWith(ExtensionPoint.class, true);
-        log.debug("Plugin registry : found " + extensionPoints.size() + " extension points");
-        Set<Class<?>> extensions = reflections.getTypesAnnotatedWith(Extension.class, true);
-        log.debug("Plugin registry : found " + extensions.size() + " extensions");
-        this.extensions = ArrayListMultimap.create();
-        // map extensions to extension points
+        if(extensionPoints == null || extensions == null){
+            Reflections reflections = ReflectionUtils.get();
+            extensionPoints = reflections.getTypesAnnotatedWith(ExtensionPoint.class, true);
+            log.debug("Plugin registry : found " + extensionPoints.size() + " extension points");
+            Set<Class<?>> extensions = reflections.getTypesAnnotatedWith(Extension.class, true);
+            log.debug("Plugin registry : found " + extensions.size() + " extensions");
+            this.extensions = ArrayListMultimap.create();
+            // map extensions to extension points
 
-        for (Class<?> extension : extensions) {
-            boolean matched = false;
-            for (Class<?> extensionPoint : extensionPoints) {
-                if(extensionPoint.isAssignableFrom(extension)){
-                    this.extensions.put(extensionPoint, extension);
-                    matched = true;
+            for (Class<?> extension : extensions) {
+                boolean matched = false;
+                for (Class<?> extensionPoint : extensionPoints) {
+                    if(extensionPoint.isAssignableFrom(extension)){
+                        this.extensions.put(extensionPoint, extension);
+                        matched = true;
+                    }
+                }
+                if(!matched){
+                    log.warn("No extension point found for " + extension.getName());
                 }
             }
-            if(!matched){
-                log.warn("No extension point found for " + extension.getName());
-            }
+            log.debug("Plugin registry : " + this.extensions.size() + " extensions registered");
         }
-        log.debug("Plugin registry : " + this.extensions.size() + " extensions registered");
     }
 
     /**

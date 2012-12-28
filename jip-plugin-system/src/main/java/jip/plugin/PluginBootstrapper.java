@@ -69,6 +69,10 @@ public class PluginBootstrapper {
      * Main injector created by this bootstrapper
      */
     private Injector mainInjector;
+    /**
+     * The plugin registry
+     */
+    private BoostrapPluginRegistry boostrapRegistry;
 
     /**
      * Create a bew bootstrapper
@@ -230,7 +234,7 @@ public class PluginBootstrapper {
      * @return plugins all found plugins
      */
     protected Set<Plugin> loadPlugins(Injector boostrapInjector){
-        BoostrapPluginRegistry boostrapRegistry = new BoostrapPluginRegistry(boostrapInjector);
+        boostrapRegistry = new BoostrapPluginRegistry(boostrapInjector);
         boostrapRegistry.initialize();
         // 2. find all server plugins
         Set<Plugin> all = boostrapRegistry.getInstances(Plugin.class);
@@ -349,9 +353,14 @@ public class PluginBootstrapper {
             // bind the plugin registry but make sure we use the main injector
             bind(PluginRegistry.class).toProvider(new Provider<PluginRegistry>() {
                 private PluginRegistryImpl pluginRegistry;
+
                 @Override
                 public PluginRegistry get() {
-                    if(pluginRegistry == null) pluginRegistry = new PluginRegistryImpl(bootstrapper.mainInjector);
+                    if (pluginRegistry == null) {
+                        Multimap<Class, Class> extensions = bootstrapper.boostrapRegistry.extensions;
+                        Set<Class<?>> extensionPoints = bootstrapper.boostrapRegistry.extensionPoints;
+                        pluginRegistry = new PluginRegistryImpl(bootstrapper.mainInjector, bootstrapper.boostrapRegistry);
+                    }
                     return pluginRegistry;
                 }
             }).in(Scopes.SINGLETON);
@@ -389,6 +398,16 @@ public class PluginBootstrapper {
          */
         private BoostrapPluginRegistry(Injector injector) {
             this.injector = injector;
+        }
+
+        @Override
+        public Set<Class<?>> getExtensionPoints() {
+            return extensionPoints;
+        }
+
+        @Override
+        public Multimap<Class, Class> getExtensions() {
+            return extensions;
         }
 
         /**

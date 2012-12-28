@@ -19,6 +19,8 @@
 
 package jip.plugin;
 
+import com.google.common.collect.Multimap;
+
 import java.util.Set;
 
 /**
@@ -41,6 +43,15 @@ public interface PluginRegistry {
      */
     Set<PluginExtension> getExtensions(Class extensionPoint);
 
+    /**
+     * Map from the extension point to the referenced interface or class
+     */
+    Set<Class<?>> getExtensionPoints();
+
+    /**
+     * Map from the extension to the implementing class
+     */
+    Multimap<Class, Class> getExtensions();
 
     /**
      * A plugin wraps an extension point implementation (extension) and

@@ -1,12 +1,9 @@
 #!/bin/bash
 
-
 ## CONFIGURATION
-
 if [ -z "$JIP_MEM" ]; then
     JIP_MEM="3G"
 fi
-
 
 # test for a java installation in the path
 if [ -z "`which java`" ]
@@ -54,13 +51,6 @@ fi
 if [ -z "$JIP_HOME" ]; then
     JIP_HOME="${dir}/../"
 fi
-
-if [ ! -e $JIP_HOME/bin/pip ]; then
-    echo "Virtual environment configuration not found! Make sure you run jip-boostrap to setup the main environment!"
-    exit 1
-fi
-
-. $JIP_HOME/bin/activate
 
 export PATH=$JIP_HOME/bin:$PATH
 

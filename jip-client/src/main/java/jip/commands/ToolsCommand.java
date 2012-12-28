@@ -10,6 +10,8 @@ import jip.plugin.Extension;
 import jip.tools.JipContext;
 import jip.tools.Tool;
 import jip.tools.ToolService;
+import net.sourceforge.argparse4j.impl.Arguments;
+import net.sourceforge.argparse4j.inf.Subparser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +62,13 @@ public class ToolsCommand implements JipCommand{
     @Override
     public String getLongDescription() {
         return "Managed installed tools";
+    }
+
+    @Override
+    public void populateParser(Subparser parser) {
+        parser.addArgument("-s", "--show").help("Show selected tool").dest("tool").type(String.class);
+        parser.addArgument("-i", "--install").help("Run selected installer").dest("installer").type(String.class);
+        parser.addArgument("--user").help("Install into user home").action(Arguments.storeTrue());
     }
 
     @Override

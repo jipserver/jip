@@ -1,0 +1,38 @@
+import org.reflections.Reflections
+import org.reflections.scanners.TypeAnnotationsScanner
+import org.reflections.util.ClasspathHelper
+import org.reflections.util.ConfigurationBuilder
+import org.reflections.util.FilterBuilder
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.reflections:reflections:0.9.5'
+    }
+}
+
+apply plugin: JipPlugin
+
+
+
+class JipPlugin implements Plugin<Project> {
+
+    void apply(Project project) {
+        project.task('collectPlugins', dependsOn: ['classes']) << {
+            ext.target = "${project.sourceSets.main.output.resourcesDir.absolutePath}/META-INF/reflections/${project.name}-reflections.xml"
+            //outputs.file file(bp)
+            Reflections reflections = new Reflections(new ConfigurationBuilder()
+                    .setScanners(new TypeAnnotationsScanner())
+                    .addUrls(new File("${project.sourceSets.main.output.classesDir}").toURI().toURL())
+            );
+            reflections.save(ext.target)
+//            def map = reflections.getStore().getStoreMap()
+//            def annotations = map["org.reflections.scanners.TypeAnnotationsScanner"]
+//            map.each {k,v ->
+//                println "${k}->${v}"
+//            }
+        }
+    }
+}

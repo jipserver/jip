@@ -34,7 +34,7 @@ public class JipModule extends AbstractModule{
         bind(IdService.class).toProvider(new Provider<IdService>() {
             @Override
             public IdService get() {
-                Object className = cfg(cfg(jip.getConfiguration(), "jobs"), "idservice").get("service");
+                Object className = jip.getConfiguration().get("jobs.idservice.service");
                 if (className == null) {
                     className = "jip.jobs.FileIdService";
                 }

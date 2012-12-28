@@ -23,19 +23,49 @@ import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+/**
+ * Helper class to search in the classpath or
+ * in META-INF/reflections for annotated classes.
+ * <p>
+ *     If the system property "jip.plugins.search" is set,
+ *     the scanner actively searches the classpath, otherwise,
+ *     the META-INF/reflections/*-reflections.xml files are
+ *     loaded from all jars in classpath.
+ * </p>
+ *
+ */
 public class ReflectionUtils {
+    /**
+     * The logger
+     */
+    public static Logger log = LoggerFactory.getLogger(ReflectionUtils.class);
+    /**
+     * The instance
+     */
     static Reflections reflections;
 
+    /**
+     * Get the initialized reflections instance
+     *
+     * @return reflections the initialized reflections instance
+     */
     public static Reflections get() {
         if (reflections == null) {
-            reflections = new Reflections(new ConfigurationBuilder()
-                    .setUrls(ClasspathHelper.forJavaClassPath())
-                    .addUrls(ClasspathHelper.forManifest())
-                    .filterInputsBy(new FilterBuilder().include(FilterBuilder.prefix("jip")))
-            );
-
-
+            if(!System.getProperty("jip.plugins.search", "false").equals("false")){
+                reflections = new Reflections(new ConfigurationBuilder()
+                        .setUrls(ClasspathHelper.forJavaClassPath())
+                        .addUrls(ClasspathHelper.forManifest())
+                        .filterInputsBy(new FilterBuilder().include(FilterBuilder.prefix("jip")))
+                );
+            }else{
+                reflections = Reflections.collect();
+            }
+            log.debug("Reflection loaded found {} keys and {} values",
+                    reflections.getStore().getKeysCount(),
+                    reflections.getStore().getValuesCount());
         }
         return reflections;
     }

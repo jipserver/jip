@@ -8,6 +8,7 @@ import jip.plugin.Extension;
 import jip.tools.Parameter;
 import jip.tools.Tool;
 import jip.tools.ToolService;
+import net.sourceforge.argparse4j.inf.Subparser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -149,5 +150,10 @@ public class SubmitCommand implements JipCommand{
             }
         }
         return params;
+    }
+
+    @Override
+    public void populateParser(Subparser parser) {
+
     }
 }

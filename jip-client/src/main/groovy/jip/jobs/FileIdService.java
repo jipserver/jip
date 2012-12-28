@@ -2,6 +2,7 @@ package jip.jobs;
 
 import com.google.inject.Inject;
 import groovy.util.ConfigObject;
+import jip.JipConfiguration;
 import jip.JipEnvironment;
 import jip.plugin.Extension;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.util.Map;
 
 /**
  *
@@ -68,11 +70,14 @@ public class FileIdService implements IdService{
     @Override
     public synchronized String next() {
         if (idfile == null) {
-            ConfigObject cfg = environment.getConfiguration();
-            Object path = get(get(cfg, "jobs"), "idservice").get("file");
+            Map<String, Object> cfg = environment.getConfiguration();
+            Object path = JipConfiguration.get(cfg, "jobs", "idservice", "file");
             if (path == null) {
                 log.error("ID service id file is not defined !");
                 throw new RuntimeException("ID service id file is not defined !");
+            }
+            if(!path.toString().startsWith("/")){
+                path = new File(environment.getJipHome(true), path.toString()).getAbsolutePath();
             }
             idfile = new File(path.toString());
             if (!idfile.getParentFile().exists()) {

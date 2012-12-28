@@ -3,6 +3,7 @@ package jip;
 import groovy.util.ConfigObject;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * JIP runtime environment
@@ -24,5 +25,5 @@ public interface JipEnvironment {
      *
      * @return config the current configuration
      */
-    public ConfigObject getConfiguration();
+    public Map<String, Object> getConfiguration();
 }

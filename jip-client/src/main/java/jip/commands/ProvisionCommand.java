@@ -1,6 +1,7 @@
 package jip.commands;
 
 import jip.plugin.Extension;
+import net.sourceforge.argparse4j.inf.Subparser;
 
 import java.util.Arrays;
 
@@ -31,5 +32,10 @@ public class ProvisionCommand implements JipCommand{
     @Override
     public void run(String[] args) {
         System.err.println("Running provisioning with " + Arrays.toString(args));
+    }
+
+    @Override
+    public void populateParser(Subparser parser) {
+
     }
 }

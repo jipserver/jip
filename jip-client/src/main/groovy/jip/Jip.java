@@ -16,8 +16,7 @@ import jip.plugin.PluginRegistry;
 import jip.tools.ToolService;
 import jip.utils.SimpleTablePrinter;
 import net.sourceforge.argparse4j.ArgumentParsers;
-import net.sourceforge.argparse4j.inf.ArgumentParser;
-import net.sourceforge.argparse4j.inf.ArgumentParserException;
+import net.sourceforge.argparse4j.inf.*;
 import org.apache.log4j.*;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
@@ -55,11 +54,15 @@ public class Jip implements JipEnvironment{
     /**
      * The current configuration
      */
-    private ConfigObject configuration;
+    private Map<String, Object> configuration;
     /**
      * The plugin registry
      */
     private PluginRegistry pluginRegistry;
+    /**
+     * The global log layout
+     */
+    private static PatternLayout logLayout;
 
     /**
      * Get the JIP directory, wither global or user specific
@@ -80,7 +83,7 @@ public class Jip implements JipEnvironment{
     }
 
     @Override
-    public ConfigObject getConfiguration() {
+    public Map<String, Object> getConfiguration() {
         if(configuration == null){
             configuration = JipConfiguration.load(getJipHome(false), getJipHome(true));
         }
@@ -93,7 +96,9 @@ public class Jip implements JipEnvironment{
      * @param args the arguments
      */
     public static void main(String[] args) {
+        long start = System.currentTimeMillis();
         new Jip().run(args);
+        log.debug("Jip finished in {}ms", System.currentTimeMillis() - start);
     }
 
     /**
@@ -111,9 +116,9 @@ public class Jip implements JipEnvironment{
      */
     void run(String[] args) {
         Properties properties = new Properties();
-        String userHome = System.getProperty("user.home") + "/.jip";
-        String jipHome = System.getProperty("jip.home");
-        if(jipHome != null){
+        String userHome = new File(System.getProperty("user.home", ".") + "/.jip").getAbsolutePath();
+        String jipHome = new File(System.getProperty("jip.home", "")).getAbsolutePath();
+        if (jipHome != null) {
             properties.setProperty("jip.home", jipHome);
         }
         properties.setProperty("jip.user.home", userHome);
@@ -142,37 +147,35 @@ public class Jip implements JipEnvironment{
         this.toolService = injector.getInstance(ToolService.class);
 
         ArgumentParser argparser = createOptions(commandService);
+        Namespace parsed = null;
         try {
-            argparser.parseArgs(args);
+            parsed = argparser.parseArgs(args);
         } catch (ArgumentParserException e) {
-            argparser.handleError(e);
-            System.exit(1);
+            System.err.println("");
+            System.err.println("Error parsing arguments: " + e.getMessage());
+            System.err.println("");
+            argparser.printHelp(new PrintWriter(System.err));
+            return;
+        }
+
+        if(parsed.get("help") != null && parsed.getBoolean("help")){
+            argparser.printHelp();
+            return;
+        }
+
+        if(parsed.getBoolean("version")){
+            showVersion();
+            return;
+        }
+
+        if(parsed.get("loglevel") != null && System.getProperty("jip.log.level", "").isEmpty()){
+            org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
+            rootLogger.addAppender(new ConsoleAppender(logLayout, ConsoleAppender.SYSTEM_ERR));
+            rootLogger.setLevel(Level.toLevel(parsed.getString("loglevel")));
+            log.debug("Set log level to " + parsed.getString("loglevel"));
         }
 
 
-//        JSAPResult options = jsap.parse(args);
-//        if(options.userSpecified("version")){
-//            showUsage(jsap);
-//            System.exit(1);
-//        }
-//
-//        if(args.length < 1){
-//            System.err.println("No command specified");
-//            showUsage(jsap);
-//        }else{
-//            String command = args[0];
-//            String[] rest = new String[]{};
-//            if(args.length > 1){
-//                rest = new String[args.length-1];
-//                System.arraycopy(args,1, rest, 0, args.length-1);
-//            }
-//            JipCommand jipCommand = commandService.get(command);
-//            if(jipCommand == null){
-//                log.error("Command {} not found !");
-//                showUsage(jsap);
-//            }
-//            jipCommand.run(rest);
-//        }
     }
 
     /**
@@ -185,6 +188,19 @@ public class Jip implements JipEnvironment{
     ArgumentParser createOptions(JipCommandService commandService) {
         ArgumentParser args = ArgumentParsers.newArgumentParser("jip", true);
         args.addArgument("-v", "--version").action(storeTrue()).help("Show version information");
+        args.addArgument("--loglevel").choices("info", "warn", "error", "debug").help("Enable console " +
+                "logging and set the log level");
+
+        Subparsers commandParser = args.addSubparsers();
+        commandParser.description("JIP commands to run different tasks");
+        commandParser.metavar("Commands");
+        for (JipCommand jipCommand : commandService.getCommands()) {
+            log.debug("Adding sub-command {}", jipCommand.getCommandName());
+            Subparser cmdParser = commandParser.addParser(jipCommand.getCommandName());
+            cmdParser.description(jipCommand.getShortDescription());
+            cmdParser.help(jipCommand.getShortDescription());
+            jipCommand.populateParser(cmdParser);
+        }
         return args;
 //        args.
 //
@@ -241,9 +257,8 @@ public class Jip implements JipEnvironment{
         System.exit(1);
     }
 
-    static void configureLogger(ConfigObject config) throws IOException {
-        Map allFlat = config.flatten();
-        Object logFileInConfig = allFlat.get("jip.logging.logfile");
+    static void configureLogger(Map<String, Object> config) throws IOException {
+        Object logFileInConfig = JipConfiguration.get(config, "jip", "logging", "logfile");
 
         if(logFileInConfig == null){
             System.err.println("No logfile specified !");
@@ -263,12 +278,9 @@ public class Jip implements JipEnvironment{
         }
 
         // configure log4j
-        PatternLayout logLayout = new PatternLayout(allFlat.get("jip.logging.pattern").toString());
+        logLayout = new PatternLayout(JipConfiguration.get(config, "jip", "logging", "pattern").toString());
         org.apache.log4j.Logger rootLogger = org.apache.log4j.Logger.getRootLogger();
-        // get rid of the reflections errors
-        //org.apache.log4j.Logger.getLogger(Reflections.class).setLevel(Level.FATAL);
-
-        Map logging = ((ConfigObject)((ConfigObject)config.get("jip")).get("logging")).flatten();
+        Map logging = (Map) JipConfiguration.get(config, "jip", "logging");
         Properties loggingProperties = new Properties();
         loggingProperties.putAll(logging);
 
@@ -279,6 +291,15 @@ public class Jip implements JipEnvironment{
                 logfile.getAbsolutePath(),
                 true
         ));
+
+        String loglevel = System.getProperty("jip.log.level", "");
+        if(!loglevel.isEmpty()){
+            rootLogger.addAppender(new ConsoleAppender(logLayout, ConsoleAppender.SYSTEM_ERR));
+            rootLogger.setLevel(Level.toLevel(loglevel));
+            log.debug("Set log level to " + loglevel);
+        }
+
+
         SLF4JBridgeHandler.install();
     }
 }

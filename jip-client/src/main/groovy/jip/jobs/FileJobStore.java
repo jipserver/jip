@@ -3,6 +3,7 @@ package jip.jobs;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import jip.JipConfiguration;
 import jip.JipEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +73,21 @@ public class FileJobStore implements JobStore{
      */
     @Inject
     public FileJobStore(JipEnvironment jipEnvironment){
-        this(new File((String) jipEnvironment.getConfiguration().flatten().get("jip.storage.directory")));
+        this(new File(getDirectory(jipEnvironment)));
+    }
+
+    /**
+     * Resolve the storage directory
+     *
+     * @param jipEnvironment the environment
+     * @return path the path to the storage directory
+     */
+    private static String getDirectory(JipEnvironment jipEnvironment) {
+        String path = (String) JipConfiguration.get(jipEnvironment.getConfiguration(), "jip", "storage", "directory");
+        if(!path.startsWith("/")){
+            path = new File(jipEnvironment.getJipHome(true), path).getAbsolutePath();
+        }
+        return path;
     }
 
     @Override

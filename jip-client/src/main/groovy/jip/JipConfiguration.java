@@ -27,11 +27,6 @@ public class JipConfiguration {
     private static Logger log = LoggerFactory.getLogger(JipConfiguration.class);
 
     /**
-     * The configuration
-     */
-    private static Map<String, Object> configuration;
-
-    /**
      * Load the current configuration
      *
      * @param jipHome the jip installation location
@@ -39,26 +34,23 @@ public class JipConfiguration {
      * @return config the configuration map
      */
     public static Map<String, Object> load(File jipHome, File userhome) {
-        if(configuration == null){
-            // load default configuration
-            URL defaultConfiguration = JipConfiguration.class.getResource("/Configuration.json");
-            Gson parser = new Gson();
-            try {
-                configuration = parser.fromJson(new InputStreamReader(defaultConfiguration.openStream()), Map.class);
-                File jipConfig = new File(jipHome, "conf/Config.groovy");
-                if(jipConfig.exists()){
-                    configuration.putAll(parser.fromJson(new FileReader(jipConfig), Map.class));
-                }
-                File userConfig = new File(userhome, "conf/Config.groovy");
-                if(userConfig.exists()){
-                    configuration.putAll(parser.fromJson(new FileReader(userConfig), Map.class));
-                }
-            } catch (IOException e) {
-                log.error("Error while reading configuration : {}", e.getMessage());
-                throw new RuntimeException(e);
+        Map<String, Object> configuration;
+        // load default configuration
+        URL defaultConfiguration = JipConfiguration.class.getResource("/Configuration.json");
+        Gson parser = new Gson();
+        try {
+            configuration = parser.fromJson(new InputStreamReader(defaultConfiguration.openStream()), Map.class);
+            File jipConfig = new File(jipHome, "conf/Config.groovy");
+            if(jipConfig.exists()){
+                configuration.putAll(parser.fromJson(new FileReader(jipConfig), Map.class));
             }
-
-
+            File userConfig = new File(userhome, "conf/Config.groovy");
+            if(userConfig.exists()){
+                configuration.putAll(parser.fromJson(new FileReader(userConfig), Map.class));
+            }
+        } catch (IOException e) {
+            log.error("Error while reading configuration : {}", e.getMessage());
+            throw new RuntimeException(e);
         }
         return configuration;
     }

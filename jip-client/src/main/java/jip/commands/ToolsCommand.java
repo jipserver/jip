@@ -66,9 +66,9 @@ public class ToolsCommand implements JipCommand{
 
     @Override
     public void populateParser(Subparser parser) {
-        parser.addArgument("-s", "--show").help("Show selected tool").dest("tool").type(String.class);
-        parser.addArgument("-i", "--install").help("Run selected installer").dest("installer").type(String.class);
         parser.addArgument("--user").help("Install into user home").action(Arguments.storeTrue());
+        parser.addArgument("-s", "--show").help("Show selected tool").dest("tool").metavar("tool").type(String.class);
+        parser.addArgument("-i", "--install").help("Run selected installer").dest("installer").metavar("installer").type(String.class);
     }
 
     @Override
@@ -77,7 +77,7 @@ public class ToolsCommand implements JipCommand{
         try {
             options = new JSAP();
             options.registerParameter(CLIHelper.switchParameter("help", 'h').required().help("Show help message").get());
-            options.registerParameter(CLIHelper.flaggedParameter("show", 's').help("Show selected tools").get());
+            options.registerParameter(CLIHelper.flaggedParameter("show", 's').valueName("tool").help("Show selected tools").get());
             options.registerParameter(CLIHelper.flaggedParameter("install", 'i').valueName("url").help("Install selected tool").get());
             options.registerParameter(CLIHelper.switchParameter("user").help("Install into user home").get());
         } catch (Exception e) {

@@ -9,6 +9,7 @@ import jip.tools.Parameter;
 import jip.tools.Tool;
 import jip.tools.ToolService;
 import net.sourceforge.argparse4j.inf.Subparser;
+import net.sourceforge.argparse4j.inf.Subparsers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,6 +156,11 @@ public class RunCommand implements JipCommand{
 
     @Override
     public void populateParser(Subparser parser) {
-
+        parser.addArgument("-o", "--output").dest("stdout").help("Job logfile").type(String.class);
+        parser.addArgument("-e", "--error").dest("stderr").help("Job error logfile").type(String.class);
+        Subparsers toolsCommands = parser.addSubparsers();
+        for (Tool tool : toolService.getTools()) {
+            toolsCommands.addParser(tool.getName(), true).description(tool.getDescription());
+        }
     }
 }

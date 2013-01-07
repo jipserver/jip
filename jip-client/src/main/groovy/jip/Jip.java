@@ -1,39 +1,30 @@
 package jip;
 
-import com.google.common.io.Files;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.martiansoftware.jsap.JSAP;
-import com.martiansoftware.jsap.JSAPException;
-import com.martiansoftware.jsap.JSAPResult;
 import groovy.text.GStringTemplateEngine;
 import groovy.text.Template;
-import groovy.util.ConfigObject;
 import jip.commands.JipCommand;
 import jip.commands.JipCommandService;
 import jip.plugin.PluginBootstrapper;
 import jip.plugin.PluginRegistry;
 import jip.tools.ToolService;
-import jip.utils.SimpleTablePrinter;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.inf.*;
 import org.apache.log4j.*;
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import static net.sourceforge.argparse4j.impl.Arguments.storeTrue;
+import static net.sourceforge.argparse4j.impl.Arguments.version;
 
 /**
  * JIP Client main class
@@ -124,7 +115,7 @@ public class Jip implements JipEnvironment{
         properties.setProperty("jip.user.home", userHome);
 
         try {
-            configureLogger(getConfiguration());
+            configureLogger(this, getConfiguration());
         } catch (IOException e) {
             log.error("Error while initializing logging system : {}", e.getMessage());
         }
@@ -164,7 +155,7 @@ public class Jip implements JipEnvironment{
         }
 
         if(parsed.getBoolean("version")){
-            showVersion();
+            createVersionString();
             return;
         }
 
@@ -187,13 +178,16 @@ public class Jip implements JipEnvironment{
      */
     ArgumentParser createOptions(JipCommandService commandService) {
         ArgumentParser args = ArgumentParsers.newArgumentParser("jip", true);
-        args.addArgument("-v", "--version").action(storeTrue()).help("Show version information");
+        args.version(createVersionString());
+        args.addArgument("-v", "--version").action(version()).help("Show version information");
         args.addArgument("--loglevel").choices("info", "warn", "error", "debug").help("Enable console " +
                 "logging and set the log level");
 
         Subparsers commandParser = args.addSubparsers();
+        commandParser.dest("command");
         commandParser.description("JIP commands to run different tasks");
         commandParser.metavar("Commands");
+
         for (JipCommand jipCommand : commandService.getCommands()) {
             log.debug("Adding sub-command {}", jipCommand.getCommandName());
             Subparser cmdParser = commandParser.addParser(jipCommand.getCommandName());
@@ -231,21 +225,30 @@ public class Jip implements JipEnvironment{
     }
 
 
-    void showVersion(){
-        GStringTemplateEngine engine = new GStringTemplateEngine();
+    String createVersionString() {
+
+        BufferedReader bufferedReader = null;
         try {
-            Template template = engine.createTemplate(getClass().getResource("/cli/version.txt"));
-            HashMap binding = new HashMap();
-            binding.put("version", "Development");
-            URL versionResource = getClass().getResource("jip-client-build.properties");
-            if(versionResource != null){
-                Properties versionInfo = new Properties();
-                versionInfo.load(versionResource.openStream());
-                binding.put("version", versionInfo.getProperty("library.version", "Development"));
+            URL versionResource = getClass().getResource("/jip-client-build.properties");
+            Properties versionInfo = new Properties();
+            versionInfo.load(versionResource.openStream());
+            String version = versionInfo.getProperty("library.version", "unknown");
+            URL versionText = getClass().getResource("/cli/version.txt");
+            bufferedReader = new BufferedReader(new InputStreamReader(versionText.openStream()));
+            StringBuilder b = new StringBuilder();
+            String l = null;
+            while((l = bufferedReader.readLine()) != null){
+                l = l.replaceAll("\\$\\{version\\}", version);
+                b.append(l).append("\n");
             }
-            template.make(binding).writeTo(new PrintWriter(System.err));
+            return b.toString();
         } catch (Exception e) {
-            System.err.println("That is embarrassing, I cant find the version information. Sorry.");
+            log.error("Error while preparing version information", e);
+            return "That is embarrassing, I cant find the version information. Sorry.";
+        } finally {
+            if (bufferedReader != null) {
+                try {bufferedReader.close();} catch (IOException ignore) {}
+            }
         }
 
     }
@@ -257,12 +260,15 @@ public class Jip implements JipEnvironment{
         System.exit(1);
     }
 
-    static void configureLogger(Map<String, Object> config) throws IOException {
+    static void configureLogger(JipEnvironment env, Map<String, Object> config) throws IOException {
         Object logFileInConfig = JipConfiguration.get(config, "jip", "logging", "logfile");
 
         if(logFileInConfig == null){
             System.err.println("No logfile specified !");
             return;
+        }
+        if(!logFileInConfig.toString().startsWith("/")){
+            logFileInConfig = new File(env.getJipHome(true), logFileInConfig.toString()).getAbsolutePath();
         }
         File logfile = new File(logFileInConfig.toString());
 

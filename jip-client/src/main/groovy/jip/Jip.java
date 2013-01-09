@@ -154,7 +154,7 @@ public class Jip implements JipEnvironment{
             return;
         }
 
-        if(parsed.getBoolean("version")){
+        if(parsed.get("version") != null && parsed.getBoolean("version")){
             createVersionString();
             return;
         }
@@ -164,6 +164,15 @@ public class Jip implements JipEnvironment{
             rootLogger.addAppender(new ConsoleAppender(logLayout, ConsoleAppender.SYSTEM_ERR));
             rootLogger.setLevel(Level.toLevel(parsed.getString("loglevel")));
             log.debug("Set log level to " + parsed.getString("loglevel"));
+        }
+        Object command = parsed.get("command");
+        if(command != null){
+            JipCommand cmd = commandService.get(command.toString());
+            if(cmd == null){
+                log.error("Command {} not found!", command);
+                return;
+            }
+            cmd.run(args, parsed);
         }
 
 
@@ -196,32 +205,6 @@ public class Jip implements JipEnvironment{
             jipCommand.populateParser(cmdParser);
         }
         return args;
-//        args.
-//
-//
-//        JSAP jsap = new JSAP();
-//        try {
-//
-//            jsap.registerParameter(CLIHelper.switchParameter("help", 'h').help("Show the help message").get());
-//            jsap.registerParameter(CLIHelper.switchParameter("version", 'v').help("Show version information").get());
-//            jsap.registerParameter(CLIHelper.unflaggedParameter("command").help("The JIP command to run").required().get());
-//
-//            jsap.setUsage("jip ");
-//            StringBuilder helpBuilder = new StringBuilder("JIP command line tools can be used to interact with jip.\n" +
-//                    "The following commands are supported:\n");
-//            helpBuilder.append("\n");
-//            SimpleTablePrinter table = new SimpleTablePrinter(Arrays.asList("Command", "Description"));
-//            for (JipCommand jipCommand : commandService.getCommands()) {
-//                String shortDescription = jipCommand.getShortDescription();
-//                if(shortDescription == null) shortDescription = "";
-//                table.addRow(jipCommand.getCommandName(), shortDescription);
-//            }
-//            helpBuilder.append(table);
-//            jsap.setHelp(helpBuilder.toString());
-//        } catch (JSAPException e) {
-//            throw new RuntimeException(e);
-//        }
-//        return jsap;
     }
 
 

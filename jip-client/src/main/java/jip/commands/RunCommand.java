@@ -8,6 +8,7 @@ import jip.plugin.Extension;
 import jip.tools.Parameter;
 import jip.tools.Tool;
 import jip.tools.ToolService;
+import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import net.sourceforge.argparse4j.inf.Subparsers;
 import org.slf4j.Logger;
@@ -55,7 +56,7 @@ public class RunCommand implements JipCommand{
     }
 
     @Override
-    public void run(String[] args) {
+    public void run(String[] args, Namespace parsed) {
         JSAP options = null;
         try {
             options = new JSAP();

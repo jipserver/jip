@@ -1,6 +1,7 @@
 package jip.commands;
 
 import jip.plugin.ExtensionPoint;
+import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 
 /**
@@ -36,8 +37,9 @@ public interface JipCommand {
      * Run the command and its arguments
      *
      * @param args arguments
+     * @param parsed parsed name space
      */
-    void run(String[] args);
+    void run(String[] args, Namespace parsed);
 
     /**
      * Add arguments to the command line parser

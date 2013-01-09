@@ -29,6 +29,10 @@ class ToolDelegate{
         tool.setDescription(description)
     }
 
+    void version(String version){
+        tool.setVersion(version)
+    }
+
     void exec(String exec){
         tool.setClosure({ cfg->
             bash(exec)

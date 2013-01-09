@@ -140,7 +140,14 @@ public class SimpleTablePrinter {
             }
             b.append("\n");
             if(printBorders)line.append("|");
-            for(int i=0; i<length-1; i++) line.append("-");
+            for (int i = 0; i < columnWidths.length; i++) {
+                for(int j=0; j < columnWidths[i]+SPACE; j++){
+                    line.append("-");
+                }
+                if(i+1 <columnWidths.length){
+                    line.append("+");
+                }
+            }
             if(printBorders)line.append("|");
             line.append("\n");
             b.append(line);
@@ -159,7 +166,17 @@ public class SimpleTablePrinter {
 
         if(printFooter){
             b.append(line);
-            b.append(rows.size()).append(" Elements\n");
+            int l = length;
+            if(printBorders){
+                b.append("| ");
+                l -= 2;
+            }
+            int size = rows.size();
+            String w = size+" Element"+(size>1? "s":"");
+            String formatString = "%-" + Math.max(SPACE, l) + "s";
+            b.append(String.format(formatString, w));
+            if(printBorders){b.append("|");}
+            b.append("\n");
             b.append(line);
         }
         return b.toString();

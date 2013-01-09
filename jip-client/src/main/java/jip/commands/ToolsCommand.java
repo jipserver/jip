@@ -10,17 +10,16 @@ import jip.plugin.Extension;
 import jip.tools.JipContext;
 import jip.tools.Tool;
 import jip.tools.ToolService;
+import jip.utils.SimpleTablePrinter;
 import net.sourceforge.argparse4j.impl.Arguments;
+import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * List, show, and install tools
@@ -72,37 +71,28 @@ public class ToolsCommand implements JipCommand{
     }
 
     @Override
-    public void run(String[] args) {
-        JSAP options = null;
-        try {
-            options = new JSAP();
-            options.registerParameter(CLIHelper.switchParameter("help", 'h').required().help("Show help message").get());
-            options.registerParameter(CLIHelper.flaggedParameter("show", 's').valueName("tool").help("Show selected tools").get());
-            options.registerParameter(CLIHelper.flaggedParameter("install", 'i').valueName("url").help("Install selected tool").get());
-            options.registerParameter(CLIHelper.switchParameter("user").help("Install into user home").get());
-        } catch (Exception e) {
-            log.error("Error while creating options : {}", e.getMessage());
-            throw new RuntimeException(e);
-        }
-        JSAPResult input = options.parse(args);
-        if(input.userSpecified("help") || !input.success()){
-            CLIHelper.printCommandError(getCommandName(), options, input);
-            System.exit(1);
-        }
+    public void run(String[] args, Namespace parsed) {
+        if(parsed.get("tool") != null){
 
-        if(input.userSpecified("install")){
-            installTool(input.getString("install"), input.userSpecified("user"));
-        }else if(input.userSpecified("show")){
-            showTool(input.getString("show"));
         }else{
+            // list tools as a default action
             listTools();
         }
+
+//        if(input.userSpecified("install")){
+//            installTool(input.getString("install"), input.userSpecified("user"));
+//        }else if(input.userSpecified("show")){
+//            showTool(input.getString("show"));
+//        }else{
+//            listTools();
+//        }
     }
 
     /**
      * List available tools
      */
     protected void listTools() {
+        log.debug("Preparing tools table");
         ArrayList<Tool> tools = new ArrayList<Tool>(toolService.getTools());
         Collections.sort(tools, new Comparator<Tool>() {
             @Override
@@ -110,6 +100,21 @@ public class ToolsCommand implements JipCommand{
                 return tool.getName().compareTo(tool2.getName());
             }
         });
+        log.debug("Found {} tools", tools.size());
+        System.out.println("");
+        SimpleTablePrinter tooltable = new SimpleTablePrinter(
+                Arrays.asList("Name", "Description", "Version"),
+                true, true, true);
+        for (Tool tool : tools) {
+            tooltable.addRow(tool.getName(), tool.getDescription(), tool.getVersion());
+        }
+        System.out.println(tooltable);
+        System.out.println("You can get more information about a tool");
+        System.out.println("using the show command, for example");
+        System.out.println("");
+        System.out.println("  jip tools -s bash");
+        System.out.println("");
+
     }
 
     /**

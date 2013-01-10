@@ -16,5 +16,12 @@
     "storage":{
         "store" : "jip.jobs.FileJobStore",
         "directory" : "jobs"
+    },
+    "cluster":{
+        "name": "cluster",
+        "type": "slurm",
+        "configuration":{
+
+        }
     }
 }

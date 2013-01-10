@@ -23,12 +23,12 @@ public interface Cluster {
     void cancel(List<Job> jobs) throws Exception;
 
     /**
-     * Submits the given list of jobs
+     * Submit a job
      *
-     * @param jobs the jobs to be submitted
+     * @param job the job to be submitted
      * @throws Exception
      */
-    void submit(List<Job> jobs) throws Exception;
+    void submit(Job job) throws Exception;
 
     /**
      * Submits the given list of jobs

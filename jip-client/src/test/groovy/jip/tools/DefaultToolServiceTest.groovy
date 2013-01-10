@@ -12,7 +12,7 @@ class DefaultToolServiceTest {
 
     @Test
     public void testLoadingDefaultTools() throws Exception {
-        def service = new DefaultToolService(null, null)
+        def service = new DefaultToolService(null, null, null)
         assert service.getTools().size() == 1
         assert service.getTool("bash") != null
     }

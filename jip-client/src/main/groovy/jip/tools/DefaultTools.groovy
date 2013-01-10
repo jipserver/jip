@@ -13,6 +13,7 @@ class DefaultTools {
             version '1.0'
             exec '''${args.join(" ")}'''
             option(name:"args", list:true, positional:true)
+            output(name:"out", description:"Optional output file")
         }
     }
 }

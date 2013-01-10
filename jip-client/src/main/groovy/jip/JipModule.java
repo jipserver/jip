@@ -5,7 +5,10 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import groovy.util.ConfigObject;
-import jip.jobs.IdService;
+import jip.cluster.ClusterService;
+import jip.cluster.DefaultClusterService;
+import jip.dsl.JipDSLContext;
+import jip.jobs.*;
 import jip.plugin.PluginRegistry;
 import jip.tools.DefaultToolService;
 import jip.tools.ToolService;
@@ -31,6 +34,17 @@ public class JipModule extends AbstractModule{
     protected void configure() {
         bind(JipEnvironment.class).toInstance(jip);
         bind(ToolService.class).to(DefaultToolService.class).in(Scopes.SINGLETON);
+        bind(RunService.class).to(DefaultRunService.class).in(Scopes.SINGLETON);
+        bind(PipelineService.class).to(DefaultPipelineService.class).in(Scopes.SINGLETON);
+        bind(ClusterService.class).to(DefaultClusterService.class).in(Scopes.SINGLETON);
+        bind(JipDSLContext.class).toProvider(new Provider<JipDSLContext>() {
+            @Inject
+            JipEnvironment runtime;
+            @Override
+            public JipDSLContext get() {
+                return new JipDSLContext(runtime);
+            }
+        }).in(Scopes.SINGLETON);
         bind(IdService.class).toProvider(new Provider<IdService>() {
             @Override
             public IdService get() {

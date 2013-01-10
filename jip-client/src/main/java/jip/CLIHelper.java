@@ -3,10 +3,8 @@ package jip;
 import com.martiansoftware.jsap.*;
 import com.martiansoftware.jsap.Parameter;
 import jip.tools.*;
-import net.sourceforge.argparse4j.inf.Argument;
-import net.sourceforge.argparse4j.inf.ArgumentParser;
-import net.sourceforge.argparse4j.inf.Subparser;
-import net.sourceforge.argparse4j.inf.Subparsers;
+import net.sourceforge.argparse4j.impl.action.AppendArgumentAction;
+import net.sourceforge.argparse4j.inf.*;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -39,7 +37,9 @@ public class CLIHelper {
             Argument argument = parser.addArgument((p.isPositional() ? "" : "--") + p.getName());
             argument.help(p.getDescription());
             argument.dest(p.getName());
-
+            if(p.isMandatory()){
+                argument.required(true);
+            }
             if(p.isList()){
                 argument.nargs(p.isMandatory() ? "+":"*");
             }

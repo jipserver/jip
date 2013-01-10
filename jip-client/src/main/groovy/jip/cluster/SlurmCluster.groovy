@@ -1,6 +1,7 @@
 package jip.cluster
 
 import jip.jobs.Job
+import jip.plugin.Extension
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -13,6 +14,7 @@ import java.util.regex.Pattern
  *
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
+@Extension
 class SlurmCluster implements Cluster{
     /**
      * Slurm grid type
@@ -126,7 +128,7 @@ class SlurmCluster implements Cluster{
 
     @Override
     String getType() {
-        return type;
+        return TYPE;
     }
 
     Map<String, ClusterJobState> parseSqueueOutput(InputStream output) throws IOException {
@@ -159,52 +161,50 @@ class SlurmCluster implements Cluster{
     }
 
     @Override
-    void submit(List<Job> jobs) {
-        for (Job job : jobs) {
-            def params = [[sbatch]]
-            if(job.executeEnvironment){
-                def environment = job.executeEnvironment
-                if(environment.threads > 0) params<<['-c', "${environment.threads}"]
+    void submit(Job job) {
+        def params = [[sbatch]]
+        if(job.executeEnvironment){
+            def environment = job.executeEnvironment
+            if(environment.threads > 0) params<<['-c', "${environment.threads}"]
 //                if(environment.nodes > 0) params<<["-N", "${environment.nodes}"]
 //                if(environment.qos) params<<["--qos=${environment.qos}"]
 //                if(environment.partition) params<<["-p", "${environment.partition}"]
-                if(environment.maxMemory > 0) params<<["--mem-per-cpu=${environment.maxMemory}"]
+            if(environment.maxMemory > 0) params<<["--mem-per-cpu=${environment.maxMemory}"]
 //                if(environment.freeTempSpace > 0) params<<["--tmp=${environment.freeTempSpace}"]
-                if(environment.maxTime && environment.maxTime > 0) params<<["-t", "${environment.maxTime}"]
+            if(environment.maxTime && environment.maxTime > 0) params<<["-t", "${environment.maxTime}"]
 //                if(environment.additionalProperties){
 //                    params << environment.additionalProperties
 //                }
-            }
-
-            // set log files
-
-            if(!job.log){
-                job.log = "${job.workingDirectory}/jip-${job.id}.out"
-            }
-            if(!job.errorLog){
-                job.errorLog = "${job.workingDirectory}/jip-${job.id}.err"
-            }
-            params << ['-o', job.log, '-e', job.errorLog]
-
-            if (job.dependenciesBefore && job.dependenciesBefore.size() > 0){
-                params << ['-d', "afterok:${job.dependenciesBefore.collect {it.remoteId}.join(':')}"]
-            }
-            if (job.workingDirectory){
-                params << ['-D', job.workingDirectory]
-            }
-
-
-            params << "jip execute ${job.id}"
-
-            def process = params.flatten().join(" ").execute()
-            def res = process.inputStream.text
-            Matcher m = SUBMIT_PATTERN.matcher(res);
-            if(process.waitFor() != 0 || !m.matches()){
-                throw new RuntimeException("Unable to submit job : ${process.errorStream.text}")
-            }
-            def jobId = m.group(1)
-            job.remoteId = jobId
         }
+
+        // set log files
+
+        if(!job.log){
+            job.log = "${job.workingDirectory}/jip-${job.id}.out"
+        }
+        if(!job.errorLog){
+            job.errorLog = "${job.workingDirectory}/jip-${job.id}.err"
+        }
+        params << ['-o', job.log, '-e', job.errorLog]
+
+        if (job.dependenciesBefore && job.dependenciesBefore.size() > 0){
+            params << ['-d', "afterok:${job.dependenciesBefore.collect {it.remoteId}.join(':')}"]
+        }
+        if (job.workingDirectory){
+            params << ['-D', job.workingDirectory]
+        }
+
+
+        params << "jip execute ${job.id}"
+
+        def process = params.flatten().join(" ").execute()
+        def res = process.inputStream.text
+        Matcher m = SUBMIT_PATTERN.matcher(res);
+        if(process.waitFor() != 0 || !m.matches()){
+            throw new RuntimeException("Unable to submit job : ${process.errorStream.text}")
+        }
+        def jobId = m.group(1)
+        job.remoteId = jobId
     }
 
     @Override

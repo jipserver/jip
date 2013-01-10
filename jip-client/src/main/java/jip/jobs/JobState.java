@@ -9,30 +9,42 @@ public enum JobState {
     /**
      * Job submitted to the JIP queue
      */
-    Submitted,
+    Submitted(false),
 
     /**
      * Job in cluster queue and waiting for execution
      */
-    Queued,
+    Queued(false),
 
     /**
      * Job finished successfully
      */
-    Done,
+    Done(true),
 
     /**
      * Job finished not in fail state
      */
-    Failed,
+    Failed(true),
 
     /**
      * Job was canceled
      */
-    Canceled,
+    Canceled(false),
 
     /**
      * Job on hold
      */
-    Hold,
+    Hold(false);
+    /**
+     * State is a finished state
+     */
+    private boolean doneState;
+
+    private JobState(boolean doneState) {
+        this.doneState = doneState;
+    }
+
+    boolean isDoneState(){
+        return doneState;
+    }
 }

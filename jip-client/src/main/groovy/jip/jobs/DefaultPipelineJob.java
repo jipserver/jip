@@ -1,5 +1,7 @@
 package jip.jobs;
 
+import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,10 +24,21 @@ public class DefaultPipelineJob implements PipelineJob{
      */
     private List<Job> jobs;
 
+    /**
+     * Create a new pipeline job
+     *
+     * @param id the job id
+     */
     public DefaultPipelineJob(String id) {
         this(id, null);
     }
 
+    /**
+     * Create a new job
+     *
+     * @param id the id
+     * @param name optional name
+     */
     public DefaultPipelineJob(String id, String name) {
         if(id == null) throw new NullPointerException("NULL id not permitted");
         this.id = id;
@@ -66,6 +79,24 @@ public class DefaultPipelineJob implements PipelineJob{
                 }
             }
         }
+    }
+
+    @Override
+    public ExecutionGraph getGraph() {
+        ExecutionGraph graph = new ExecutionGraph();
+        for (Job job : jobs) {
+            graph.addVertex(job);
+        }
+        for (Job job : jobs) {
+            for (Job before : job.getDependenciesBefore()) {
+                try {
+                    graph.addDagEdge(before, job, before.getId());
+                } catch (DirectedAcyclicGraph.CycleFoundException e) {
+                    throw new RuntimeException("Cycle in graph ?");
+                }
+            }
+        }
+        return graph;
     }
 
     @Override

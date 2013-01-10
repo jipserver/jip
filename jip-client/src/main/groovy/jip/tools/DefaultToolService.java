@@ -44,6 +44,11 @@ public class DefaultToolService implements ToolService {
     private JipDSLContext toolContext;
 
     /**
+     * Service is initialized
+     */
+    private boolean initialized;
+
+    /**
      * Creates a new instance of the tools service. The
      * instance is not initialized yet. Initialization
      * will happen lazily on first access.
@@ -52,9 +57,10 @@ public class DefaultToolService implements ToolService {
      * @param runtime the jip runtime environment
      */
     @Inject
-    public DefaultToolService(PluginRegistry pluginRegistry, JipEnvironment runtime) {
+    public DefaultToolService(PluginRegistry pluginRegistry, JipEnvironment runtime, JipDSLContext toolContext) {
         this.pluginRegistry = pluginRegistry;
         this.runtime = runtime;
+        this.toolContext = toolContext;
     }
 
     /**
@@ -64,7 +70,7 @@ public class DefaultToolService implements ToolService {
      */
     @Override
     public Tool getTool(String name) {
-        if(toolContext == null) initialize();
+        if(!initialized) initialize();
         return toolContext.getTools().get(name);
     }
 
@@ -77,11 +83,13 @@ public class DefaultToolService implements ToolService {
      *
      */
     protected synchronized void initialize() {
-        if(toolContext != null) return;
-        log.info("Creating DSL context");
-        this.toolContext = new JipDSLContext(runtime);
+        if(initialized) return;
+        this.initialized = true;
+        if(toolContext == null){
+            log.info("Creating DSL context");
+            this.toolContext = new JipDSLContext(runtime);
+        }
         log.info("Initializing tools");
-
         log.info("Loading default tools");
         Closure defaultTools = DefaultTools.tools;
         defaultTools.setDelegate(toolContext);
@@ -152,14 +160,14 @@ public class DefaultToolService implements ToolService {
 
     @Override
     public Collection<Tool> getTools() {
-        if(toolContext == null) initialize();
+        if(!initialized) initialize();
         return Collections.unmodifiableCollection(toolContext.getTools().values());
     }
 
     @Override
     public void register(Tool tool) {
         if(tool == null) throw new NullPointerException("NULL tool can not be registered");
-        if(toolContext == null) initialize();
+        if(!initialized) initialize();
         String name = tool.getName();
         if(toolContext.getTools().containsKey(name)){
             log.error("Tool {} already registered", name);
@@ -170,7 +178,7 @@ public class DefaultToolService implements ToolService {
     }
 
     public JipDSLContext loadFrom(File file){
-        if(toolContext == null) initialize();
+        if(!initialized) initialize();
         JipDSL dsl = new JipDSL(toolContext);
         return dsl.evaluateToolDefinition(file, Collections.emptyMap());
     }

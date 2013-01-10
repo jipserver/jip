@@ -1,0 +1,13 @@
+The run command executes tools and pipelines either locally or on a remote cluster.
+
+Wall clock time
+===============
+
+The -t|--time parameter supports the following formats
+
+    mm           minutes
+    mm:ss        minutes:seconds
+    hh:mm:ss     hours:minutes:seconds
+    d-hh         days-hours
+    d-hh:mm      days-hours:minutes
+    d-hh:mm:ss   days-hours:minutes:seconds

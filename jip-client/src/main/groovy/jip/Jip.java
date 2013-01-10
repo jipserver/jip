@@ -144,9 +144,8 @@ public class Jip implements JipEnvironment{
             parsed = argparser.parseArgs(args);
         } catch (ArgumentParserException e) {
             System.err.println("");
-            System.err.println("Error parsing arguments: " + e.getMessage());
+            System.err.println("Error parsing arguments\n\n" + e.getMessage());
             System.err.println("");
-            argparser.printHelp(new PrintWriter(System.err));
             return;
         }
 
@@ -202,7 +201,7 @@ public class Jip implements JipEnvironment{
         for (JipCommand jipCommand : commandService.getCommands()) {
             log.debug("Adding sub-command {}", jipCommand.getCommandName());
             Subparser cmdParser = commandParser.addParser(jipCommand.getCommandName());
-            cmdParser.description(jipCommand.getShortDescription());
+            cmdParser.description(jipCommand.getLongDescription());
             cmdParser.help(jipCommand.getShortDescription());
             jipCommand.populateParser(cmdParser);
         }

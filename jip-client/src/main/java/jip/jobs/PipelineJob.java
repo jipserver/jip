@@ -1,5 +1,7 @@
 package jip.jobs;
 
+import org.jgrapht.experimental.dag.DirectedAcyclicGraph;
+
 import java.util.List;
 
 /**
@@ -29,5 +31,20 @@ public interface PipelineJob {
      * @return jobs the list of jobs associated with this pipeline
      */
     public List<Job> getJobs();
+
+    /**
+     * Get the execution graph representation
+     *
+     * @return graph the execution graph
+     */
+    public ExecutionGraph getGraph();
+
+    class ExecutionGraph extends DirectedAcyclicGraph<Job, String> implements Iterable<Job>{
+
+        public ExecutionGraph() {
+            super(String.class);
+        }
+
+    }
 
 }

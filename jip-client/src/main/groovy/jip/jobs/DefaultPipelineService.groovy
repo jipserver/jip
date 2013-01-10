@@ -1,5 +1,6 @@
 package jip.jobs
 
+import com.google.inject.Inject
 import jip.dsl.JipDSL
 import jip.dsl.JipDSLContext
 import jip.graph.FileParameter
@@ -33,6 +34,7 @@ class DefaultPipelineService implements PipelineService{
      * @param context the context
      * @param idService the id service
      */
+    @Inject
     DefaultPipelineService(JipDSLContext context, IdService idService) {
         this.context = context
         this.idService = idService

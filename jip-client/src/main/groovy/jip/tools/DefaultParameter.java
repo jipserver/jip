@@ -15,6 +15,10 @@ public class DefaultParameter implements Parameter{
      */
     private String description;
     /**
+     * Positional parameter
+     */
+    private boolean positional;
+    /**
      * Represents files
      */
     private boolean file;
@@ -104,6 +108,15 @@ public class DefaultParameter implements Parameter{
     @Override
     public Object[] getOptions() {
         return options;
+    }
+
+    @Override
+    public boolean isPositional() {
+        return positional;
+    }
+
+    public void setPositional(boolean positional) {
+        this.positional = positional;
     }
 
     public void setName(String name) {

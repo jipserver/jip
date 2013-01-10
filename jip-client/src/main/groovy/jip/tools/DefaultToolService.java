@@ -27,10 +27,12 @@ public class DefaultToolService implements ToolService {
      * The logger
      */
     private static Logger log = LoggerFactory.getLogger(DefaultToolService.class);
+
     /**
      * The plugin registry
      */
     private PluginRegistry pluginRegistry;
+
     /**
      * The JIP runtime environment
      */
@@ -76,6 +78,7 @@ public class DefaultToolService implements ToolService {
      */
     protected synchronized void initialize() {
         if(toolContext != null) return;
+        log.info("Creating DSL context");
         this.toolContext = new JipDSLContext(runtime);
         log.info("Initializing tools");
 

@@ -128,6 +128,7 @@ public class PluginBootstrapper {
      * @throws Exception in case a plugin could not be loaded
      */
     public Injector bootstrap(boolean addShutdownHooks) throws Exception{
+        log.debug("Creating bootstrap injector");
         Injector boostrapInjector = Guice.createInjector();
         log.info("Loading plugins");
         plugins = loadPlugins(boostrapInjector);

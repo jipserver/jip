@@ -138,6 +138,7 @@ public class Jip implements JipEnvironment{
         this.toolService = injector.getInstance(ToolService.class);
 
         ArgumentParser argparser = createOptions(commandService);
+        log.debug("Parsing command line options");
         Namespace parsed = null;
         try {
             parsed = argparser.parseArgs(args);
@@ -167,6 +168,7 @@ public class Jip implements JipEnvironment{
         }
         Object command = parsed.get("command");
         if(command != null){
+            log.debug("Calling command {}", command);
             JipCommand cmd = commandService.get(command.toString());
             if(cmd == null){
                 log.error("Command {} not found!", command);

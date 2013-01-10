@@ -11,7 +11,9 @@ import jip.tools.JipContext;
 import jip.tools.Tool;
 import jip.tools.ToolService;
 import jip.utils.SimpleTablePrinter;
+import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.impl.Arguments;
+import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.Namespace;
 import net.sourceforge.argparse4j.inf.Subparser;
 import org.slf4j.Logger;
@@ -19,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 
 /**
@@ -73,7 +76,7 @@ public class ToolsCommand implements JipCommand{
     @Override
     public void run(String[] args, Namespace parsed) {
         if(parsed.get("tool") != null){
-
+            showTool(parsed.getString("tool"));
         }else{
             // list tools as a default action
             listTools();
@@ -120,10 +123,14 @@ public class ToolsCommand implements JipCommand{
     /**
      * Print tool information to console
      *
-     * @param tool the name of the tool
+     * @param toolName the name of the tool
      */
-    protected void showTool(String tool) {
-
+    protected void showTool(String toolName) {
+        System.out.println("Tool : " + toolName);
+        Tool tool = toolService.getTool(toolName);
+        ArgumentParser args = ArgumentParsers.newArgumentParser(toolName, true);
+        CLIHelper.populateParser(tool, args);
+        args.printHelp(new PrintWriter(System.out));
     }
 
     /**

@@ -55,14 +55,18 @@ public class ReflectionUtils {
     public static Reflections get() {
         if (reflections == null) {
             if(!System.getProperty("jip.plugins.search", "false").equals("false")){
+                log.debug("Collecting plugin information via reflection scan");
                 reflections = new Reflections(new ConfigurationBuilder()
                         .setUrls(ClasspathHelper.forJavaClassPath())
                         .addUrls(ClasspathHelper.forManifest())
                         .filterInputsBy(new FilterBuilder().include(FilterBuilder.prefix("jip")))
                 );
+
             }else{
+                log.debug("Collecting plugin information from META-INF");
                 reflections = Reflections.collect();
             }
+            log.debug("Scan finished");
             log.debug("Reflection loaded found {} keys and {} values",
                     reflections.getStore().getKeysCount(),
                     reflections.getStore().getValuesCount());

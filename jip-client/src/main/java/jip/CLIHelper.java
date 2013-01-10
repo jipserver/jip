@@ -1,9 +1,16 @@
 package jip;
 
 import com.martiansoftware.jsap.*;
+import com.martiansoftware.jsap.Parameter;
+import jip.tools.*;
+import net.sourceforge.argparse4j.inf.Argument;
+import net.sourceforge.argparse4j.inf.ArgumentParser;
+import net.sourceforge.argparse4j.inf.Subparser;
+import net.sourceforge.argparse4j.inf.Subparsers;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.util.Map;
 
 /**
  * Helper class to create JSAP parameters with a builder pattern
@@ -21,6 +28,33 @@ public class CLIHelper {
             return new File(s);
         }
     };
+
+
+
+    public static void populateParser(Tool tool, ArgumentParser parser) {
+        parser.description(tool.getDescription());
+        parser.version(tool.getVersion());
+        for (Map.Entry<String, jip.tools.Parameter> parameterEntry : tool.getParameter().entrySet()) {
+            jip.tools.Parameter p = parameterEntry.getValue();
+            Argument argument = parser.addArgument((p.isPositional() ? "" : "--") + p.getName());
+            argument.help(p.getDescription());
+            argument.dest(p.getName());
+
+            if(p.isList()){
+                argument.nargs(p.isMandatory() ? "+":"*");
+            }
+            if(p.getDefaultValue() != null){
+                argument.setDefault(p.getDefaultValue());
+            }
+            if(p.getOptions() != null){
+                argument.choices(p.getOptions());
+            }
+            if(p.getDataType() != null){
+                argument.type(p.getDataType());
+            }
+        }
+    }
+
 
     /**
      * Print error message

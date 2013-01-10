@@ -22,6 +22,13 @@ public interface Parameter {
     String getDescription();
 
     /**
+     * Returns true if this is a positional parameter
+     *
+     * @return file true if this is a file parameter
+     */
+    boolean isPositional();
+
+    /**
      * Returns true if this is a file parameter
      *
      * @return file true if this is a file parameter

@@ -12,7 +12,7 @@ class DefaultTools {
             description '''Run bash commands'''
             version '1.0'
             exec '''${args.join(" ")}'''
-            option(name:"args", list:true)
+            option(name:"args", list:true, positional:true)
         }
     }
 }

@@ -70,7 +70,7 @@ public class ToolsCommand implements JipCommand{
     public void populateParser(Subparser parser) {
         parser.addArgument("--user").help("Install into user home").action(Arguments.storeTrue());
         parser.addArgument("-s", "--show").help("Show selected tool").dest("tool").metavar("tool").type(String.class);
-        parser.addArgument("-i", "--install").help("Run selected installer").dest("installer").metavar("installer").type(String.class);
+//        parser.addArgument("-i", "--install").help("Run selected installer").dest("installer").metavar("installer").type(String.class);
     }
 
     @Override

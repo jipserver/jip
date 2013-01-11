@@ -44,6 +44,7 @@ public class DefaultJob implements Job{
      * @param config the configuration
      */
     public DefaultJob(Map config) {
+        this.jobStats = new DefaultJobStats();
         this.id = (String) config.get("id");
         this.workingDirectory = (String) config.get("workingDirectory");
         if(config.containsKey("remoteId")) this.remoteId = (String) config.get("remoteId");
@@ -64,7 +65,6 @@ public class DefaultJob implements Job{
         if(config.containsKey("environment"))this.environment = (Map<String, String>) config.get("environment");
         if(config.containsKey("configuration"))this.configuration = (Map<String, Object>) config.get("configuration");
         if(config.containsKey("executeEnvironment"))this.executeEnvironment = new DefaultExecuteEnvironment((Map) config.get("executeEnvironment"));
-        this.jobStats = new DefaultJobStats();
     }
 
     @Override

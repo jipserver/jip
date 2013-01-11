@@ -2,6 +2,7 @@ package jip.commands;
 
 import com.google.inject.Inject;
 import jip.CLIHelper;
+import jip.jobs.PipelineJob;
 import jip.jobs.RunService;
 import jip.plugin.Extension;
 import jip.tools.Tool;
@@ -80,7 +81,8 @@ public class RunCommand implements JipCommand{
             }else{
                 log.debug("Submitting job");
                 try {
-                    runService.submit(parsed.getString("tool"), parsed.getAttrs(), cwd, null); // default cluster
+                    PipelineJob job = runService.submit(parsed.getString("tool"), parsed.getAttrs(), cwd, null);// default cluster
+                    System.out.println(job.getId() + " submitted");
                 } catch (Exception e) {
                     log.error("Error submitting tool {} : {}", parsed.getString("tool"), e.getMessage());
                     throw new RuntimeException(e);

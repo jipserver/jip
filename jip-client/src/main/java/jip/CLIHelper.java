@@ -8,6 +8,8 @@ import net.sourceforge.argparse4j.inf.*;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -142,6 +144,38 @@ public class CLIHelper {
      */
     public static UnflaggedParameterBuilder unflaggedParameter(String id){
         return new UnflaggedParameterBuilder(id);
+    }
+
+    /**
+     * Parse list of ranges where single numbers are returned as single numbers,
+     * and ranges like x-y are parsed
+     *
+     * @param job
+     * @return
+     */
+    public static List<Long> parseRange(List<Object> job) {
+        List<Long> range = new ArrayList<Long>();
+        for (Object o : job) {
+            try {
+                String s = o.toString();
+                if(s.contains("-")){
+                    String[] ss = s.split("-");
+                    long start = Long.parseLong(ss[0]);
+                    long end = Long.parseLong(ss[1]);
+                    long t = start;
+                    start = Math.min(start, end);
+                    end = Math.max(t, end);
+                    for(;start<=end;start++){
+                        range.add(start);
+                    }
+                }else{
+                    range.add(Long.parseLong(s));
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Unable to parse range from " + o.toString());
+            }
+        }
+        return range;
     }
 
 

@@ -91,9 +91,9 @@ public class Time implements Serializable, Comparable<Time>{
     }
 
     /**
-     * Create time and initialize with given minutes
+     * Create time and initialize with given seconds
      *
-     * @param time time in minuted
+     * @param time time in seconds
      */
     public Time(long time) {
         this.time= time;

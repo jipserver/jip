@@ -49,7 +49,7 @@ public enum JobState {
         this.doneState = doneState;
     }
 
-    boolean isDoneState(){
+    public boolean isDoneState(){
         return doneState;
     }
 }

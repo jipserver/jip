@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -55,6 +56,7 @@ public class DefaultRunService implements RunService{
         }
         try {
             jobTool.run(new File(job.getWorkingDirectory()), job.getConfiguration());
+            jobStore.setState(job.getPipelineId(), job.getId(), JobState.Done, null);
         } catch (Exception e) {
             log.error("Job execution for {}-{} failed : {}", new Object[]{job.getPipelineId(), job.getId(), e.getMessage()});
             jobStore.setState(job.getPipelineId(), job.getId(), JobState.Failed, e.getMessage());
@@ -74,7 +76,7 @@ public class DefaultRunService implements RunService{
     }
 
     @Override
-    public void submit(String tool, Map configuration, File directory, String clusterName) throws Exception {
+    public PipelineJob submit(String tool, Map configuration, File directory, String clusterName) throws Exception {
         Cluster cluster = null;
         if(clusterName == null){
             cluster = clusterService.getDefault();
@@ -100,16 +102,34 @@ public class DefaultRunService implements RunService{
         for (Job job : graph) {
             submit(job, cluster);
         }
+        return pipelineJob;
     }
 
     public void submit(Job job, Cluster cluster) {
         try {
             log.info("Submitting {}-{}", job.getPipelineId(), job.getId());
             cluster.submit(job);
+            // save job
+            jobStore.save(job);
             jobStore.setState(job.getPipelineId(), job.getId(), JobState.Queued, null);
         } catch (Exception e) {
             log.error("Error submitting job : " + e.getMessage(), e);
             throw new RuntimeException("Unable to submit job : " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void cancel(PipelineJob job) {
+        log.info("Canceling {}", job.getId());
+        for (Job j : job.getGraph()) {
+            if(!j.getState().isDoneState()){
+                try {
+                    clusterService.getDefault().cancel(Arrays.asList(j));
+                } catch (Exception e) {
+                    log.warn("Error while canceling " + j.getId(), e);
+                }
+                jobStore.setState(j.getPipelineId(), j.getId(), JobState.Canceled, null);
+            }
         }
     }
 }

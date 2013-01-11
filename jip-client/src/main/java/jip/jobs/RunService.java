@@ -46,5 +46,12 @@ public interface RunService {
      * @param cluster the cluster name
      * @throws Exception in case something went wrong
      */
-    public void submit(String tool, Map configuration, File directory, String cluster) throws Exception;
+    public PipelineJob submit(String tool, Map configuration, File directory, String cluster) throws Exception;
+
+    /**
+     * Cancel teh given pipeline job
+     *
+     * @param job the job
+     */
+    void cancel(PipelineJob job);
 }

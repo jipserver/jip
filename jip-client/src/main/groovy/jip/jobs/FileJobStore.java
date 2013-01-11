@@ -153,16 +153,16 @@ public class FileJobStore implements JobStore{
     }
 
     FileStoreJob lock(String id){
+        if(id == null){
+            throw new NullPointerException("NULL pipeline job id not permitted!");
+        }
         FileLock lock = null;
         FileChannel channel = null;
         try {
             // Get a file channel for the file
-            File file = new File(storageDirectory, id + ".job");
+            File file = getJobFile(id);
             if(!file.exists()){
-                file = new File(archiveDirectory, id + ".job");
-            }
-            if(!file.exists()){
-                throw new RuntimeException("Job " + id + " not found !");
+                throw new RuntimeException("Storage file for job " + id + " not found !");
             }
 
             RandomAccessFile rw = new RandomAccessFile(file, "rw");
@@ -193,16 +193,27 @@ public class FileJobStore implements JobStore{
         }
     }
 
+    /**
+     * Determine the storage file for a job
+     *
+     * @param id the job id
+     * @return
+     */
+    private File getJobFile(String id) {
+        File file = new File(storageDirectory, id + ".job");
+        if(!file.exists()){
+            file = new File(archiveDirectory, id + ".job");
+        }
+        return file;
+    }
+
     @Override
     public PipelineJob get(String id) {
         FileLock lock = null;
         FileChannel channel = null;
         try {
             // Get a file channel for the file
-            File file = new File(storageDirectory, id + ".job");
-            if(!file.exists()){
-                file = new File(archiveDirectory, id + ".job");
-            }
+            File file = getJobFile(id);
             if(!file.exists()){
                 throw new RuntimeException("Job " + id + " not found !");
             }
@@ -241,6 +252,16 @@ public class FileJobStore implements JobStore{
                 return file.getName().endsWith(".job");
             }
         });
+        Arrays.sort(files, new Comparator<File>() {
+            @Override
+            public int compare(File file, File file2) {
+                long l1 = Long.parseLong(file.getName().substring(0, file.getName().length() - 4));
+                long l2 = Long.parseLong(file2.getName().substring(0, file2.getName().length() - 4));
+                if(l1 < l2) return 1;
+                if(l1 == l2) return 0;
+                return -1;
+            }
+        });
         return new JobIterable(files);
     }
 
@@ -265,6 +286,20 @@ public class FileJobStore implements JobStore{
             }
         }
 
+    }
+
+    @Override
+    public void save(Job job){
+        FileStoreJob pipelineJob = lock(job.getPipelineId());
+        int index = 0;
+        for (Job job1 : pipelineJob.getJobs()) {
+            if(job1.getId().equals(job.getId())){
+                pipelineJob.getJobs().set(index, job);
+                pipelineJob.saveAndRelease();
+                return;
+            }
+            index++;
+        }
     }
 
 
@@ -338,7 +373,6 @@ public class FileJobStore implements JobStore{
 
         public JobIterable(File[] files) {
             this.files = new ArrayList<File>(Arrays.asList(files));
-            Collections.sort(this.files);
             this.iterator = this.files.iterator();
         }
 

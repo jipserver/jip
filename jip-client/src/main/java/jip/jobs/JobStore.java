@@ -58,4 +58,9 @@ public interface JobStore {
      */
     public Iterable<PipelineJob> list(boolean archived);
 
+    /**
+     * Save a full job
+     * @param job the job
+     */
+    void save(Job job);
 }

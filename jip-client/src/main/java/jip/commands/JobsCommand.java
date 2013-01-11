@@ -74,24 +74,7 @@ public class JobsCommand implements JipCommand{
            || cancelList != null && cancelList.size() > 0){
 
             if(jobIdList != null && jobIdList.size() > 0){
-                // jobs jobs
-                SimpleTablePrinter table = new SimpleTablePrinter(Arrays.asList(
-                        "Pipeline",
-                        "ID",
-                        "Remote ID",
-                        "State",
-                        "Time",
-                        "Max-Time",
-                        "Progress",
-                        "Message",
-                        "State Reason"
-
-                ));
-
-                for (Long jobId : CLIHelper.parseRange(jobIdList)){
-                    showPipelineJob(jobId+"", table);
-                }
-                System.out.println(table);
+                showJobDetails(CLIHelper.parseRange(jobIdList));
             }
 
             if(deleteList != null && deleteList.size() > 0){
@@ -103,19 +86,57 @@ public class JobsCommand implements JipCommand{
         }else{
             // list jobs
             Iterable<PipelineJob> jobList = jobStore.list(parsed.getBoolean("list-archived"));
-            SimpleTablePrinter jobTable = new SimpleTablePrinter(Arrays.asList("ID", "Name", "State", "Progress"));
+            SimpleTablePrinter jobTable = new SimpleTablePrinter(Arrays.asList(
+                    "ID",
+                    "Name",
+                    "State",
+                    "Progress",
+                    "Time",
+                    "Last Message"));
             for (PipelineJob pipelineJob : jobList) {
                 Map<JobState, Integer> counts = getJobStateMap(pipelineJob);
+                JobState state = getState(counts);
                 jobTable.addRow(
                         pipelineJob.getId(),
                         pipelineJob.getName(),
-                        getState(counts),
+                        state,
                         counts.get(JobState.Done)+"/"+pipelineJob.getJobs().size()
+//                        getPipelineJobTime(pipelineJob, state),
+//                        getLastMessage(pipelineJob)
                 );
             }
             System.out.println(jobTable.toString());
-
         }
+    }
+
+    private void getPipelineJobTime(PipelineJob pipelineJob, JobState state) {
+        long start = Long.MAX_VALUE;
+        long end = System.currentTimeMillis()/1000;
+        boolean useStart = state.isDoneState() || state == JobState.Running;
+        for (Job job : pipelineJob.getJobs()) {
+            start = Math.min(start, (useStart ? job.getJobStats().getStartDate().getTime() : job.getJobStats().getCreateDate().getTime())/1000);
+        }
+    }
+
+    private void showJobDetails(List<Long> jobIdList) {
+        // jobs jobs
+        SimpleTablePrinter table = new SimpleTablePrinter(Arrays.asList(
+                "Pipeline",
+                "ID",
+                "Remote ID",
+                "State",
+                "Time",
+                "Max-Time",
+                "Progress",
+                "Message",
+                "State Reason"
+
+        ));
+
+        for (Long jobId : jobIdList){
+            addPipelineJobToTable(jobId + "", table);
+        }
+        System.out.println(table);
     }
 
     private void deleteJobs(List<Long> ids) {
@@ -146,7 +167,7 @@ public class JobsCommand implements JipCommand{
         }
     }
 
-    private void showPipelineJob(String pipelineJobId, SimpleTablePrinter table) {
+    private void addPipelineJobToTable(String pipelineJobId, SimpleTablePrinter table) {
         PipelineJob pipelineJob = jobStore.get(pipelineJobId);
         for (Job job : pipelineJob.getJobs()) {
             JobStats jobStats = job.getJobStats();

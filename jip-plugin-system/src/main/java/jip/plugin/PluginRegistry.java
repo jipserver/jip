@@ -54,6 +54,14 @@ public interface PluginRegistry {
     Multimap<Class, Class> getExtensions();
 
     /**
+     * Get the instance of the given extension
+     *
+     * @param extension the extension
+     * @return instance the instance
+     */
+    Object getInstance(PluginExtension extension);
+
+    /**
      * A plugin wraps an extension point implementation (extension) and
      * provides access to the implementing clazz and the name
      */

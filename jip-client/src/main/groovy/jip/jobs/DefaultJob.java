@@ -64,6 +64,7 @@ public class DefaultJob implements Job{
         if(config.containsKey("environment"))this.environment = (Map<String, String>) config.get("environment");
         if(config.containsKey("configuration"))this.configuration = (Map<String, Object>) config.get("configuration");
         if(config.containsKey("executeEnvironment"))this.executeEnvironment = new DefaultExecuteEnvironment((Map) config.get("executeEnvironment"));
+        this.jobStats = new DefaultJobStats();
     }
 
     @Override
@@ -168,7 +169,7 @@ public class DefaultJob implements Job{
     public JobStats getJobStats() {
         return jobStats;
     }
-
+    @Override
     public void setId(String id) {
         this.id = id;
     }
@@ -209,18 +210,22 @@ public class DefaultJob implements Job{
         this.dependenciesAfter = dependenciesAfter;
     }
 
+    @Override
     public void setProgress(int progress) {
         this.progress = progress;
     }
 
+    @Override
     public void setMessages(List<Message> messages) {
         this.messages = messages;
     }
 
+    @Override
     public void setState(JobState state) {
         this.state = state;
     }
 
+    @Override
     public void setStateReason(String stateReason) {
         this.stateReason = stateReason;
     }
@@ -229,6 +234,7 @@ public class DefaultJob implements Job{
         this.workingDirectory = workingDirectory;
     }
 
+    @Override
     public void setJobStats(JobStats jobStats) {
         this.jobStats = jobStats;
     }
@@ -237,6 +243,8 @@ public class DefaultJob implements Job{
     public static Map toMap(Job job){
         HashMap map = new HashMap();
         map.put("id", job.getId());
+        map.put("pipelineId", job.getPipelineId());
+        map.put("remoteId", job.getRemoteId());
         map.put("workingDirectory", job.getWorkingDirectory());
         map.put("toolName", job.getToolName());
         map.put("stateReason", job.getStateReason());

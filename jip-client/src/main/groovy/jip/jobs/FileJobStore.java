@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import jip.JipConfiguration;
 import jip.JipEnvironment;
+import jip.plugin.Extension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +23,7 @@ import java.util.*;
  *
  * @author Thasso Griebel <thasso.griebel@gmail.com>
  */
+@Extension
 public class FileJobStore implements JobStore{
     /**
     * The logger
@@ -83,7 +85,7 @@ public class FileJobStore implements JobStore{
      * @return path the path to the storage directory
      */
     private static String getDirectory(JipEnvironment jipEnvironment) {
-        String path = (String) JipConfiguration.get(jipEnvironment.getConfiguration(), "jip", "storage", "directory");
+        String path = (String) JipConfiguration.get(jipEnvironment.getConfiguration(), "storage", "directory");
         if(!path.startsWith("/")){
             path = new File(jipEnvironment.getJipHome(true), path).getAbsolutePath();
         }
@@ -105,7 +107,7 @@ public class FileJobStore implements JobStore{
             Gson gson = new Gson();
             rw.writeChars(gson.toJson(data));
         } catch (Exception e) {
-            log.error("Error while writing job file", e.getMessage());
+            log.error("Error while writing job file", e);
             throw new RuntimeException(e);
         } finally {
             // Release the lock
@@ -150,6 +152,47 @@ public class FileJobStore implements JobStore{
         }
     }
 
+    FileStoreJob lock(String id){
+        FileLock lock = null;
+        FileChannel channel = null;
+        try {
+            // Get a file channel for the file
+            File file = new File(storageDirectory, id + ".job");
+            if(!file.exists()){
+                file = new File(archiveDirectory, id + ".job");
+            }
+            if(!file.exists()){
+                throw new RuntimeException("Job " + id + " not found !");
+            }
+
+            RandomAccessFile rw = new RandomAccessFile(file, "rw");
+            channel = rw.getChannel();
+            // Use the file channel to create a lock on the file.
+            // This method blocks until it can retrieve the lock.
+            lock = channel.lock();
+            MappedByteBuffer map = channel.map(FileChannel.MapMode.READ_ONLY, 0, file.length());
+            Gson gson = new Gson();
+            String content = map.asCharBuffer().toString();
+            HashMap jobMap = gson.fromJson(content, HashMap.class);
+            FileStoreJob job = new FileStoreJob(jobMap);
+            job.lock = lock;
+            job.channel = channel;
+            job.rw = rw;
+            return job;
+        } catch (Exception e) {
+            log.error("Error while writing job file", e);
+            // Release the lock
+            if (lock != null) {
+                try {lock.release();} catch (IOException ignore) {}
+            }
+            // Close the file
+            if (channel != null) {
+                try {channel.close();} catch (IOException ignore) {}
+            }
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
     public PipelineJob get(String id) {
         FileLock lock = null;
@@ -175,7 +218,7 @@ public class FileJobStore implements JobStore{
             HashMap jobMap = gson.fromJson(content, HashMap.class);
             return new DefaultPipelineJob(jobMap);
         } catch (Exception e) {
-            log.error("Error while writing job file", e.getMessage());
+            log.error("Error while writing job file", e);
             throw new RuntimeException(e);
         } finally {
             // Release the lock
@@ -199,6 +242,94 @@ public class FileJobStore implements JobStore{
             }
         });
         return new JobIterable(files);
+    }
+
+    @Override
+    public void setState(String pipelineId, String jobId, JobState state, String reason){
+        FileStoreJob pipelineJob = lock(pipelineId);
+        for (Job job1 : pipelineJob.getJobs()) {
+            if(job1.getId().equals(jobId)){
+                job1.setState(state);
+                job1.setStateReason(reason);
+                if(state == JobState.Running){
+                    job1.getJobStats().setStartDate(new Date());
+                    job1.getJobStats().setEndDate(null);
+                }else if(state == JobState.Submitted ||state == JobState.Queued ){
+                    job1.getJobStats().setStartDate(null);
+                    job1.getJobStats().setEndDate(null);
+                }else if(state.isDoneState()){
+                    job1.getJobStats().setEndDate(new Date());
+                }
+                pipelineJob.saveAndRelease();
+                break;
+            }
+        }
+
+    }
+
+
+    /**
+     * Internal job store pipeline job
+     * that hold a reference to the lock
+     */
+    private class FileStoreJob extends DefaultPipelineJob{
+        /**
+         * The file lock
+         */
+        FileLock lock;
+        /**
+         * The file channel
+         */
+        FileChannel channel;
+
+        /**
+         * Random access
+         */
+        RandomAccessFile rw;
+
+        public FileStoreJob(String id) {
+            super(id);
+        }
+
+        public FileStoreJob(String id, String name) {
+            super(id, name);
+        }
+
+        public FileStoreJob(Map config) {
+            super(config);
+        }
+
+
+        public void saveAndRelease(){
+            if(lock == null || channel == null) return;
+            try {
+                Map<String, Object> data = DefaultPipelineJob.toMap(this);
+                Gson gson = new Gson();
+                // to the beginning
+                rw.seek(0);
+                rw.setLength(0);
+                rw.writeChars(gson.toJson(data));
+            } catch (Exception e) {
+                log.error("Error while writing job file", e.getMessage(), e);
+                throw new RuntimeException(e);
+            } finally {
+                // Release the lock
+                if (rw != null) {
+                    try {rw.close();} catch (IOException ignore) {}
+                }
+                // Release the lock
+                if (lock != null) {
+                    try {lock.release();} catch (IOException ignore) {}
+                }
+                // Close the file
+                if (channel != null) {
+                    try {channel.close();} catch (IOException ignore) {}
+                }
+
+            }
+
+        }
+
     }
 
     private class JobIterable implements Iterable<PipelineJob>, Iterator<PipelineJob> {

@@ -1,5 +1,6 @@
 package jip.cluster
 
+import jip.JipEnvironment
 import jip.jobs.Job
 import jip.plugin.Extension
 import org.slf4j.Logger
@@ -16,6 +17,11 @@ import java.util.regex.Pattern
  */
 @Extension
 class SlurmCluster implements Cluster{
+    /**
+    * The logger
+    */
+    private static Logger log = LoggerFactory.getLogger(SlurmCluster.class);
+
     /**
      * Slurm grid type
      */
@@ -78,11 +84,6 @@ class SlurmCluster implements Cluster{
      */
     static Pattern SUBMIT_PATTERN = Pattern.compile(".*Submitted batch job (\\d+).*", Pattern.MULTILINE | Pattern.DOTALL);
 
-
-    /**
-     * The logger
-     */
-    private final Logger log = LoggerFactory.getLogger(getClass())
     /**
      * Path to the sbatch command
      */
@@ -97,23 +98,24 @@ class SlurmCluster implements Cluster{
     String squeue
 
     /**
-     * The run directory
-     */
-    String directory;
-    /**
      * The configuration
      */
     Map configuration
 
-    SlurmCluster() {
-        this([:])
-    }
-    SlurmCluster(Map attr) {
-        this.sbatch = attr?.sbatch ? attr.sbatch : "sbatch"
-        this.scancel = attr?.scancel ? attr.scancel : "scancel"
-        this.squeue = attr?.squeue ? attr.squeue : "squeue"
-        this.directory = attr?.directory ? attr.directory : "/tmp"
-        this.configuration = attr;
+    /**
+     * The JIP runtime environment
+     */
+    private JipEnvironment runtime
+
+
+    @Override
+    void configure(JipEnvironment environment, Map configuration) {
+        this.runtime = environment
+        this.configuration = configuration
+        this.sbatch = configuration?.sbatch ? configuration.sbatch : "sbatch"
+        this.scancel = configuration?.scancel ? configuration.scancel : "scancel"
+        this.squeue = configuration?.squeue ? configuration.squeue : "squeue"
+
     }
 
     @Override
@@ -162,42 +164,44 @@ class SlurmCluster implements Cluster{
 
     @Override
     void submit(Job job) {
+        log.debug("Submitting job {}-{}", job.getPipelineId(), job.getId())
         def params = [[sbatch]]
+        // add environment parameters
         if(job.executeEnvironment){
             def environment = job.executeEnvironment
             if(environment.threads > 0) params<<['-c', "${environment.threads}"]
-//                if(environment.nodes > 0) params<<["-N", "${environment.nodes}"]
-//                if(environment.qos) params<<["--qos=${environment.qos}"]
-//                if(environment.partition) params<<["-p", "${environment.partition}"]
             if(environment.maxMemory > 0) params<<["--mem-per-cpu=${environment.maxMemory}"]
-//                if(environment.freeTempSpace > 0) params<<["--tmp=${environment.freeTempSpace}"]
             if(environment.maxTime && environment.maxTime > 0) params<<["-t", "${environment.maxTime}"]
-//                if(environment.additionalProperties){
-//                    params << environment.additionalProperties
-//                }
         }
 
-        // set log files
-
+        // if no log files are set,
+        // set them
         if(!job.log){
-            job.log = "${job.workingDirectory}/jip-${job.id}.out"
+            job.log = "${job.workingDirectory}/jip-${job.getPipelineId()}-${job.id}-%j.out"
         }
         if(!job.errorLog){
-            job.errorLog = "${job.workingDirectory}/jip-${job.id}.err"
+            job.errorLog = "${job.workingDirectory}/jip-${job.getPipelineId()}-${job.id}-%j.err"
         }
+        // append logs
         params << ['-o', job.log, '-e', job.errorLog]
 
+        // append dependencies
         if (job.dependenciesBefore && job.dependenciesBefore.size() > 0){
             params << ['-d', "afterok:${job.dependenciesBefore.collect {it.remoteId}.join(':')}"]
         }
+        // explicitly set working directory
         if (job.workingDirectory){
             params << ['-D', job.workingDirectory]
         }
 
+        params << ["--wrap", "${runtime.getJipHome(false)}/bin/jip execute -p ${job.getPipelineId()} -j ${job.id}"]
 
-        params << "jip execute ${job.id}"
+        // flatten paramters and submit job
+        params = params.flatten()
+        log.debug("Submitting job with : {}", params)
 
-        def process = params.flatten().join(" ").execute()
+        def process = params.execute()
+
         def res = process.inputStream.text
         Matcher m = SUBMIT_PATTERN.matcher(res);
         if(process.waitFor() != 0 || !m.matches()){

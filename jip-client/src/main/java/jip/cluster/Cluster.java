@@ -1,5 +1,6 @@
 package jip.cluster;
 
+import jip.JipEnvironment;
 import jip.jobs.Job;
 import jip.plugin.ExtensionPoint;
 
@@ -52,5 +53,13 @@ public interface Cluster {
      * @return identifier
      */
     public String getType();
+
+    /**
+     * Configure the cluster
+     *
+     * @param environment the environment
+     * @param configuration the configuration
+     */
+    public void configure(JipEnvironment environment, Map configuration);
 
 }

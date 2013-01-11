@@ -29,4 +29,9 @@ public interface JobStats {
      */
     Date getEndDate();
 
+    void setCreateDate(Date createDate);
+
+    void setStartDate(Date startDate);
+
+    void setEndDate(Date endDate);
 }

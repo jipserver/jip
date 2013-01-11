@@ -61,6 +61,23 @@ public class JipModule extends AbstractModule{
                 return null;
             }
         }).in(Scopes.SINGLETON);
+
+        bind(JobStore.class).toProvider(new Provider<JobStore>() {
+            @Inject
+            Provider<PluginRegistry> pluginRegistry;
+
+            @Override
+            public JobStore get() {
+                String storeClassName = (String) JipConfiguration.get(jip.getConfiguration(), "storage", "store");
+                PluginRegistry registry = pluginRegistry.get();
+                for (PluginRegistry.PluginExtension pluginExtension : registry.getExtensions(JobStore.class)) {
+                    if (pluginExtension.getClazz().getName().equals(storeClassName)) {
+                        return (JobStore) registry.getInstance(pluginExtension);
+                    }
+                }
+                throw new RuntimeException("No implementation found for job store!");
+            }
+        }).in(Scopes.SINGLETON);
     }
 
     private ConfigObject cfg(ConfigObject source, String id){

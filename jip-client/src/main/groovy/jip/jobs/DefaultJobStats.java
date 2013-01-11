@@ -40,15 +40,17 @@ public class DefaultJobStats implements JobStats {
     public Date getEndDate() {
         return endDate;
     }
-
+    @Override
     public void setCreateDate(Date createDate) {
         this.createDate = createDate;
     }
 
+    @Override
     public void setStartDate(Date startDate) {
         this.startDate = startDate;
     }
 
+    @Override
     public void setEndDate(Date endDate) {
         this.endDate = endDate;
     }

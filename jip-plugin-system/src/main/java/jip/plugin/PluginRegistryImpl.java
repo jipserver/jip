@@ -129,6 +129,11 @@ public class PluginRegistryImpl implements PluginRegistry {
         return instances;
     }
 
+    @Override
+    public Object getInstance(PluginExtension extension){
+        return injector.getInstance(extension.getClazz());
+    }
+
     public Set<PluginExtension> getExtensions(Class extensionPoint) {
         if(extensionPoint == null) throw new NullPointerException("NULL extension point not permitted");
         Set instances = new LinkedHashSet();

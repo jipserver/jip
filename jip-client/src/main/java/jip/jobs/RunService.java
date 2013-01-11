@@ -14,9 +14,10 @@ public interface RunService {
      * Execute a single pipeline job
      *
      * @param job the pipeline job
+     * @param updateJobStore if true job information in the job store is updated
      * @throws Exception
      */
-    public void execute(Job job) throws Exception;
+    public void execute(Job job, boolean updateJobStore) throws Exception;
 
     /**
      * Submit a single job to a cluster

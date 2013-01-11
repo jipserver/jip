@@ -478,6 +478,12 @@ public class PluginBootstrapper {
             }
             return instances;
         }
+
+        @Override
+        public Object getInstance(PluginExtension extension) {
+            if(extension == null) throw new NullPointerException("NULL extension not permitted");
+            return injector.getInstance(extension.getClazz());
+        }
     }
     
     

@@ -171,4 +171,16 @@ public interface Job {
      * @param remoteId the remote id
      */
     public void setRemoteId(String remoteId);
+
+    void setId(String id);
+
+    void setProgress(int progress);
+
+    void setMessages(List<Message> messages);
+
+    void setState(JobState state);
+
+    void setStateReason(String stateReason);
+
+    void setJobStats(JobStats jobStats);
 }

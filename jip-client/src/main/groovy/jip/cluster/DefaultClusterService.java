@@ -46,6 +46,7 @@ public class DefaultClusterService implements ClusterService{
                 for (Cluster c : pluginRegistry.getInstances(Cluster.class)) {
                     if(c.getType().equals(type)){
                         cluster.put(name, c);
+                        c.configure(environment, (Map) JipConfiguration.get(environment.getConfiguration(), "cluster", "configuration"));
                         if(defaultCluster == null){
                             defaultCluster = name;
                         }

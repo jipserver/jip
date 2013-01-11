@@ -18,6 +18,18 @@ public interface JobStore {
     public void save(PipelineJob pipelineJob);
 
     /**
+     * Update the jobs state and save it
+     *
+     * Also update the jobs dates with respect to the state
+     *
+     * @param pipelineId the pipeline id
+     * @param jobId the job id
+     * @param state the job state
+     * @param reason optional state reason
+     */
+    void setState(String pipelineId, String jobId, JobState state, String reason);
+
+    /**
      * Delete the pipeline and all jobs of the pipeline run
      *
      * @param pipelineJob the job
@@ -45,4 +57,5 @@ public interface JobStore {
      * @return jobs iterable over the jobs
      */
     public Iterable<PipelineJob> list(boolean archived);
+
 }

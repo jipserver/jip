@@ -17,6 +17,11 @@ public enum JobState {
     Queued(false),
 
     /**
+     * Job in cluster queue and waiting for execution
+     */
+    Running(false),
+
+    /**
      * Job finished successfully
      */
     Done(true),

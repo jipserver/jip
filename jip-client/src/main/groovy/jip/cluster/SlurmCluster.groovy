@@ -174,6 +174,8 @@ class SlurmCluster implements Cluster{
             if(environment.threads > 0) params<<['-c', "${environment.threads}"]
             if(environment.maxMemory > 0) params<<["--mem-per-cpu=${environment.maxMemory}"]
             if(environment.maxTime && environment.maxTime > 0) params<<["-t", "${environment.maxTime}"]
+            if(environment.priority) params<<["--qos", "${environment.priority}"]
+            if(environment.queue) params<<["-p", "${environment.queue}"]
         }
 
         // if no log files are set,

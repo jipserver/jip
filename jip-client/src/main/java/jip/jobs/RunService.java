@@ -1,6 +1,7 @@
 package jip.jobs;
 
 import jip.cluster.Cluster;
+import jip.tools.ExecuteEnvironment;
 import jip.tools.Tool;
 
 import java.io.File;
@@ -44,9 +45,10 @@ public interface RunService {
      * @param configuration the tool configuration
      * @param directory the tool directory
      * @param cluster the cluster name
+     * @param executeEnvironment the execute environment
      * @throws Exception in case something went wrong
      */
-    public PipelineJob submit(String tool, Map configuration, File directory, String cluster) throws Exception;
+    public PipelineJob submit(String tool, Map configuration, File directory, String cluster, ExecuteEnvironment executeEnvironment) throws Exception;
 
     /**
      * Cancel teh given pipeline job

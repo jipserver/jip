@@ -26,6 +26,16 @@ public class DefaultExecuteEnvironment implements ExecuteEnvironment{
      */
     private long maxTime;
 
+    /**
+     * The job queue
+     */
+    private String queue;
+
+    /**
+     * The job queue
+     */
+    private String priority;
+
     public DefaultExecuteEnvironment() {
         this.threads = 1;
         this.maxMemory = 0;
@@ -37,6 +47,8 @@ public class DefaultExecuteEnvironment implements ExecuteEnvironment{
         if(config.containsKey("threads")) this.threads = ((Number)config.get("threads")).intValue();
         if(config.containsKey("maxMemory")) this.maxMemory = ((Number)config.get("maxMemory")).longValue();
         if(config.containsKey("maxTime")) this.maxTime = ((Number)config.get("maxTime")).longValue();
+        if(config.containsKey("queue")) this.queue = (String)config.get("queue");
+        if(config.containsKey("priority")) this.priority = (String)config.get("priority");
     }
 
     @Override
@@ -54,16 +66,39 @@ public class DefaultExecuteEnvironment implements ExecuteEnvironment{
         return maxTime;
     }
 
+    @Override
     public void setThreads(int threads) {
         this.threads = threads;
     }
 
+    @Override
     public void setMaxMemory(long maxMemory) {
         this.maxMemory = maxMemory;
     }
 
+    @Override
     public void setMaxTime(long maxTime) {
         this.maxTime = maxTime;
+    }
+
+    @Override
+    public String getQueue() {
+        return queue;
+    }
+
+    @Override
+    public void setQueue(String queue) {
+        this.queue = queue;
+    }
+
+    @Override
+    public String getPriority() {
+        return priority;
+    }
+
+    @Override
+    public void setPriority(String priority) {
+        this.priority = priority;
     }
 
     public static Map toMap(ExecuteEnvironment env){
@@ -71,6 +106,8 @@ public class DefaultExecuteEnvironment implements ExecuteEnvironment{
         map.put("threads", env.getThreads());
         map.put("maxMemory", env.getMaxMemory());
         map.put("maxTime", env.getMaxTime());
+        map.put("queue", env.getQueue());
+        map.put("priority", env.getPriority());
         return map;
     }
 }

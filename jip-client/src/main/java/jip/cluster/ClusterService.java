@@ -1,5 +1,7 @@
 package jip.cluster;
 
+import jip.jobs.Job;
+
 /**
  * Provides access to cluster implementations
  *
@@ -20,4 +22,13 @@ public interface ClusterService {
      * @return the default cluster
      */
     public Cluster getDefault();
+
+    /**
+     * Apply optional cluster configuration to the given job
+     *
+     * @param job the job
+     * @param cluster the cluster
+     */
+    public void applyConfiguration(Job job, Cluster cluster);
+
 }

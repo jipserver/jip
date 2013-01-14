@@ -1,9 +1,11 @@
 package jip.jobs;
 
 import com.google.inject.Inject;
+import jip.JipEnvironment;
 import jip.cluster.Cluster;
 import jip.cluster.ClusterJobState;
 import jip.cluster.ClusterService;
+import jip.tools.ExecuteEnvironment;
 import jip.tools.Tool;
 import jip.tools.ToolService;
 import org.slf4j.Logger;
@@ -40,12 +42,18 @@ public class DefaultRunService implements RunService{
      */
     private JobStore jobStore;
 
+    /**
+     * The jip runtime environment
+     */
+    private JipEnvironment environment;
+
     @Inject
-    public DefaultRunService(ToolService toolService, PipelineService pipelineService, ClusterService clusterService, JobStore jobStore) {
+    public DefaultRunService(ToolService toolService, PipelineService pipelineService, ClusterService clusterService, JobStore jobStore, JipEnvironment environment) {
         this.toolService = toolService;
         this.pipelineService = pipelineService;
         this.clusterService = clusterService;
         this.jobStore = jobStore;
+        this.environment = environment;
     }
 
     @Override
@@ -77,7 +85,7 @@ public class DefaultRunService implements RunService{
     }
 
     @Override
-    public PipelineJob submit(String tool, Map configuration, File directory, String clusterName) throws Exception {
+    public PipelineJob submit(String tool, Map configuration, File directory, String clusterName, ExecuteEnvironment executeEnvironment) throws Exception {
         Cluster cluster = null;
         if(clusterName == null){
             cluster = clusterService.getDefault();
@@ -92,6 +100,27 @@ public class DefaultRunService implements RunService{
         PipelineJob pipelineJob = pipelineService.create(tool, configuration, directory);
         log.info("Pipeline with {} jobs created", pipelineJob.getJobs().size());
 
+        if(executeEnvironment != null){
+            log.info("updating execution environment for jobs");
+            for (Job job : pipelineJob.getJobs()) {
+                ExecuteEnvironment je = job.getExecuteEnvironment();
+                if(executeEnvironment.getThreads() > 1){
+                    je.setThreads(executeEnvironment.getThreads());
+                }
+                if(executeEnvironment.getMaxMemory() > 0){
+                    je.setMaxMemory(executeEnvironment.getMaxMemory());
+                }
+                if(executeEnvironment.getMaxTime() > 0){
+                    je.setMaxTime(executeEnvironment.getMaxTime());
+                }
+                if(executeEnvironment.getPriority() != null){
+                    je.setPriority(executeEnvironment.getPriority());
+                }
+                if(executeEnvironment.getQueue() != null){
+                    je.setQueue(executeEnvironment.getQueue());
+                }
+            }
+        }
 
         log.info("Saving pipeline job {}", pipelineJob.getId());
         for (Job job : pipelineJob.getJobs()) {
@@ -108,6 +137,7 @@ public class DefaultRunService implements RunService{
 
     public void submit(Job job, Cluster cluster) {
         try {
+            clusterService.applyConfiguration(job, cluster);
             log.info("Submitting {}-{}", job.getPipelineId(), job.getId());
             cluster.submit(job);
             // save job

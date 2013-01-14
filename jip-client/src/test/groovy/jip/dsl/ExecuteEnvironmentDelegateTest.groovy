@@ -9,6 +9,7 @@ import org.junit.Test
  */
 class ExecuteEnvironmentDelegateTest {
 
+
     @Test
     void testTimeLongProperty() {
         def ed = new ExecuteEnvironmentDelegate(new DefaultExecuteEnvironment())
@@ -110,5 +111,26 @@ class ExecuteEnvironmentDelegateTest {
         c()
         assert ed.env.threads == 10
 
+    }
+
+    @Test
+    public void testMemoryPattern() throws Exception {
+        def ed = new ExecuteEnvironmentDelegate(new DefaultExecuteEnvironment())
+        def c = {
+            memory "10M"
+        }
+        c.delegate = ed
+        c.setResolveStrategy(Closure.DELEGATE_FIRST)
+        c()
+        assert ed.env.maxMemory == 10
+
+        ed = new ExecuteEnvironmentDelegate(new DefaultExecuteEnvironment())
+        c = {
+            memory "10G"
+        }
+        c.delegate = ed
+        c.setResolveStrategy(Closure.DELEGATE_FIRST)
+        c()
+        assert ed.env.maxMemory == 10240
     }
 }

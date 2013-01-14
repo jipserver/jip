@@ -35,6 +35,11 @@ class JipDSLContext implements JipContext{
      */
     JipEnvironment jipRuntime
 
+    /**
+     * The DSL
+     */
+    JipDSL dsl
+
     @Inject
     JipDSLContext(JipEnvironment jipRuntime) {
         this.jipRuntime = jipRuntime

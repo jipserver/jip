@@ -66,6 +66,10 @@ public class RunCommand implements JipCommand{
 
     @Override
     public void run(String[] args, Namespace parsed) {
+
+        // pipeline
+
+
         if(parsed.get("tool") != null){
             log.info("Running tool {}", parsed.get("tool"));
             File cwd = new File("");
@@ -73,12 +77,14 @@ public class RunCommand implements JipCommand{
                 cwd = new File(parsed.getString("cwd"));
             }
 
+            String toolName = parsed.getString("tool");
+
             if(parsed.get("cluster") == null || ! parsed.getBoolean("cluster")){
                 log.debug("Starting local run");
                 try {
-                    runService.run(parsed.getString("tool"), parsed.getAttrs(), cwd);
+                    runService.run(toolName, parsed.getAttrs(), cwd);
                 } catch (Exception e) {
-                    log.error("Error running tool {} : {}", parsed.getString("tool"), e.getMessage());
+                    log.error("Error running tool {} : {}", toolName, e.getMessage());
                     throw new RuntimeException(e);
                 }
             }else{
@@ -94,15 +100,15 @@ public class RunCommand implements JipCommand{
                     delegate.queue(parsed.getString("queue"));
 
                     PipelineJob job = runService.submit(
-                            parsed.getString("tool"),
+                            toolName,
                             parsed.getAttrs(),
                             cwd,
                             null,
                             execEnv);// default cluster
                     System.out.println(job.getId() + " submitted");
                 } catch (Exception e) {
-                    log.error("Error submitting tool {} : {}", parsed.getString("tool"), e.getMessage());
-                    throw new RuntimeException(e);
+                    log.error("Error submitting tool {} : {}", toolName, e.getMessage());
+                    throw new RuntimeException(e.getMessage(), e);
                 }
             }
         }else{
@@ -121,6 +127,7 @@ public class RunCommand implements JipCommand{
         parser.addArgument("-m", "--max-mem").dest("memory").help("Maximum memory. You can specify in megabytes or use G suffix for gigabytes").type(String.class);
         parser.addArgument("-t", "--time").dest("time").help("Wall clock time in m or hh:mm and more *see help").type(String.class);
         parser.addArgument("-d", "--cwd").dest("cwd").help("Jobs working directory").type(String.class);
+
         Subparsers toolsCommands = parser.addSubparsers();
         toolsCommands.dest("tool");
         toolsCommands.description("The tool to execute");

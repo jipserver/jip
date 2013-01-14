@@ -3,6 +3,7 @@ package jip.dsl
 import com.sun.xml.internal.ws.api.pipe.PipelineAssembler
 import jip.JipEnvironment
 import jip.graph.Pipeline
+import jip.tools.Tool
 import org.codehaus.groovy.control.customizers.ImportCustomizer
 import org.codehaus.groovy.control.CompilerConfiguration
 
@@ -38,6 +39,7 @@ class JipDSL {
     JipDSL(JipDSLContext context) {
         this.context = context
         this.jipRuntime = context.jipRuntime
+        this.context.dsl = this
     }
 
     /**
@@ -48,9 +50,19 @@ class JipDSL {
      */
     JipDSLContext evaluateToolDefinition(String script, Map args){
         ExpandoMetaClass.enableGlobally()
+        GroovyShell shell = createShell(args)
+        return evaluateToolDefinition(shell.evaluate("{->\n${script}\n}"))
+    }
+
+    Closure evaluate(String script){
+        return createShell().evaluate("{it->\n${script}\n}") as Closure
+    }
+
+    private GroovyShell createShell(Map args) {
         def binding = new Binding([
                 context: context,
-                args: args
+                args: args,
+                dsl: this
         ])
 
         def importCustomizer = new ImportCustomizer()
@@ -60,7 +72,7 @@ class JipDSL {
         config.addCompilationCustomizers importCustomizer
 
         def shell = new GroovyShell(this.class.classLoader, binding, config)
-        return evaluateToolDefinition(shell.evaluate("{->\n${script}\n}"))
+        shell
     }
 
     /**
@@ -90,6 +102,7 @@ class JipDSL {
      */
     JipDSLContext evaluateToolDefinition(Closure script){
         JipDSLContext privateContext = new JipDSLContext(jipRuntime)
+        privateContext.dsl = this
         script.delegate = privateContext
         script.call()
         context.installer.putAll(privateContext.installer)
@@ -107,6 +120,21 @@ class JipDSL {
         run.delegate = pipelineContext
         run.setResolveStrategy(Closure.DELEGATE_FIRST)
         run.call()
+        return pipelineContext.pipeline
+    }
+
+    /**
+     * Evaluate a pipeline run closure in tool context
+     *
+     * @param run the run closure
+     * @return pipeline the pipeline
+     */
+    Pipeline evaluateRun(Map config, Closure run){
+        def pipelineContext = new JipDSLPipelineContext(context)
+        run.delegate = pipelineContext
+        run.setResolveStrategy(Closure.DELEGATE_FIRST)
+        def ret = run.call(config)
+        if(ret instanceof Pipeline) return ret
         return pipelineContext.pipeline
     }
 

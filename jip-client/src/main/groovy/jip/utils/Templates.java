@@ -69,7 +69,7 @@ public class Templates {
 
         StringWriter writer = new StringWriter();
         template.make(new DelegateMap(cfg)).writeTo(writer);
-        log.info("Template written:\n{}", writer);
+        log.debug("Template written:\n{}", writer);
         return writer.toString();
     }
 

@@ -62,12 +62,12 @@ class DefaultPipelineService implements PipelineService{
                 "${tool.name}"(cfg)
             }
         }
-        return create(toolName, pipelineClosure, cwd)
+        return create(toolName, pipelineClosure, cwd, cfg)
     }
 
-    public PipelineJob create(String name, Closure pipelineClosure, File cwd){
+    public PipelineJob create(String name, Closure pipelineClosure, File cwd, Map cfg){
         // run pipeline
-        Pipeline pipeline = new JipDSL(context).evaluateRun(pipelineClosure);
+        Pipeline pipeline = new JipDSL(context).evaluateRun(cfg, pipelineClosure);
         PipelineGraph graph = new PipelineGraph(pipeline);
         graph.prepare();
         graph.reduceDependencies();

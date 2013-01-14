@@ -81,7 +81,7 @@ public class DefaultTool implements Tool {
                 throw new NullPointerException("No JIP context specified! Unable to evaluate and run pipelines");
             }
             // run pipeline
-            Pipeline pipeline = new JipDSL(context).evaluateRun(this.pipeline);
+            Pipeline pipeline = new JipDSL(context).evaluateRun(cfg, this.pipeline);
             PipelineGraph graph = new PipelineGraph(pipeline);
             graph.prepare();
             graph.reduceDependencies();

@@ -178,7 +178,17 @@ public class Jip implements JipEnvironment{
                 log.error("Command {} not found!", command);
                 return;
             }
-            cmd.run(args, parsed);
+            try {
+                cmd.run(args, parsed);
+            } catch (Exception e) {
+                log.error("Command execution failed", e);
+                if(e.getMessage() != null){
+                    System.err.println("ERROR " + e.getMessage());
+                }else{
+                    e.printStackTrace();
+                }
+                System.exit(1);
+            }
         }
 
 

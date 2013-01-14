@@ -209,7 +209,7 @@ class SlurmCluster implements Cluster{
         def res = process.inputStream.text
         Matcher m = SUBMIT_PATTERN.matcher(res);
         if(process.waitFor() != 0 || !m.matches()){
-            throw new RuntimeException("Unable to submit job : ${process.errorStream.text}")
+            throw new RuntimeException("${process.errorStream.text}")
         }
         def jobId = m.group(1)
         job.remoteId = jobId

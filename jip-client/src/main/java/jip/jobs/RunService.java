@@ -25,8 +25,9 @@ public interface RunService {
      *
      * @param job the job
      * @param cluster the cluster
+     * @throws Exception in case the job could not be submitted
      */
-    public void submit(Job job, Cluster cluster);
+    public void submit(Job job, Cluster cluster) throws Exception;
 
     /**
      * Run a tool

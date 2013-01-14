@@ -110,4 +110,15 @@ public class DefaultExecuteEnvironment implements ExecuteEnvironment{
         map.put("priority", env.getPriority());
         return map;
     }
+
+    @Override
+    public String toString() {
+        return "DefaultExecuteEnvironment{" +
+                "threads=" + threads +
+                ", maxMemory=" + maxMemory +
+                ", maxTime=" + maxTime +
+                ", queue='" + queue + '\'' +
+                ", priority='" + priority + '\'' +
+                '}';
+    }
 }

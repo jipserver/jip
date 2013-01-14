@@ -68,6 +68,10 @@ class ExecuteEnvironmentDelegate {
     }
 
     void memory(String memory){
+        if(memory == null){
+            env.setMaxMemory(0)
+            return;
+        }
         def matcher = memoryPattern.matcher(memory)
         if (matcher.matches()){
             long mem = Long.parseLong(matcher.group(1))

@@ -135,18 +135,13 @@ public class DefaultRunService implements RunService{
         return pipelineJob;
     }
 
-    public void submit(Job job, Cluster cluster) {
-        try {
-            clusterService.applyConfiguration(job, cluster);
-            log.info("Submitting {}-{}", job.getPipelineId(), job.getId());
-            cluster.submit(job);
-            // save job
-            jobStore.save(job);
-            jobStore.setState(job.getPipelineId(), job.getId(), JobState.Queued, null);
-        } catch (Exception e) {
-            log.error("Error submitting job : " + e.getMessage(), e);
-            throw new RuntimeException("Unable to submit job : " + e.getMessage(), e);
-        }
+    public void submit(Job job, Cluster cluster) throws Exception {
+        clusterService.applyConfiguration(job, cluster);
+        log.info("Submitting {}-{}", job.getPipelineId(), job.getId());
+        cluster.submit(job);
+        // save job
+        jobStore.save(job);
+        jobStore.setState(job.getPipelineId(), job.getId(), JobState.Queued, null);
     }
 
     @Override

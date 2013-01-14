@@ -34,7 +34,7 @@ public enum JobState {
     /**
      * Job was canceled
      */
-    Canceled(false),
+    Canceled(true),
 
     /**
      * Job on hold

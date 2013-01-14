@@ -54,4 +54,9 @@ public interface RunService {
      * @param job the job
      */
     void cancel(PipelineJob job);
+
+    /**
+     * Check job status
+     */
+    void checkJobs();
 }

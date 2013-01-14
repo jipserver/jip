@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# JIP job script
+#
+
+JIP_PIPELINE=${pipelineId}
+JIP_JOB=${jobId}
+
+jip.info(){
+    ${jip} message -p $JIP_PIPELINE -j $JIP_JOB --info \$@
+}
+
+jip.warn(){
+    ${jip} message -p $JIP_PIPELINE -j $JIP_JOB --warn \$@
+}
+
+jip.error(){
+    ${jip} message -p $JIP_PIPELINE -j $JIP_JOB --error \$@
+}
+
+jip.progress(){
+    ${jip} message -p $JIP_PIPELINE -j $JIP_JOB --progress \$1
+}
+
+${script}

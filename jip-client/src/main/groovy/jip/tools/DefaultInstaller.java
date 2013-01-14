@@ -57,14 +57,14 @@ public class DefaultInstaller implements Installer{
 
     @Override
     public void install(File home) {
-        closure.setDelegate( new ExecuteDelegate(home, true));
+        closure.setDelegate( new ExecuteDelegate(home, true, null));
         closure.call(home);
     }
 
     @Override
     public boolean isInstalled(File home) {
         if(check != null){
-            check.setDelegate(new ExecuteDelegate(home, false));
+            check.setDelegate(new ExecuteDelegate(home, false, null));
             Object result = check.call(home);
             return result != null && ((result instanceof Boolean) ? ((Boolean) result) : (result instanceof Integer) && ((Integer) result) == 0);
         }

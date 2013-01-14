@@ -1,5 +1,6 @@
 package jip.utils
 
+import jip.jobs.Job
 import jip.tools.Tool
 
 
@@ -16,6 +17,7 @@ class ExecuteDelegate {
     private File workingDir
     private Tool tool
     private Map toolConfig
+    private Job job
 
     /**
      * Create a new delegate with current working directory as
@@ -33,7 +35,7 @@ class ExecuteDelegate {
      * @param failOnError throw an exception if run exists with non 0
      */
     ExecuteDelegate(Boolean failOnError) {
-        this(new File("."), failOnError)
+        this(new File("."), failOnError, null)
     }
 
     /**
@@ -42,9 +44,10 @@ class ExecuteDelegate {
      * @param workingDir working directory for the execution
      * @param failOnError throw an exception if run exists with non 0
      */
-    ExecuteDelegate(File workingDir, Boolean failOnError) {
+    ExecuteDelegate(File workingDir, Boolean failOnError, Job job) {
         this.workingDir = workingDir
         this.failOnError = failOnError
+        this.job = job
 
     }
 
@@ -80,6 +83,7 @@ class ExecuteDelegate {
                     toolConfig = [:]
                 }
                 script = Templates.fillTemplate(tool, script.toString(), toolConfig)
+                script = Templates.toJobScript(job, script)
             }
             pb = new jip.utils.ProcessBuilder(script.toString())
         }

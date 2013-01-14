@@ -54,6 +54,10 @@ public class Jip implements JipEnvironment{
      * The global log layout
      */
     private static PatternLayout logLayout;
+    /**
+     * Current jip instance
+     */
+    private static Jip instance;
 
     /**
      * Get the JIP directory, wither global or user specific
@@ -88,8 +92,9 @@ public class Jip implements JipEnvironment{
      */
     public static void main(String[] args) {
         long start = System.currentTimeMillis();
-        new Jip().run(args);
+        getInstance().run(args);
         log.debug("Jip finished in {}ms", System.currentTimeMillis() - start);
+        //System.err.println("Jip finished in "+ (System.currentTimeMillis() - start));
     }
 
     /**
@@ -291,5 +296,12 @@ public class Jip implements JipEnvironment{
 
 
         SLF4JBridgeHandler.install();
+    }
+
+    public static Jip getInstance(){
+        if(instance == null){
+            instance = new Jip();
+        }
+        return instance;
     }
 }

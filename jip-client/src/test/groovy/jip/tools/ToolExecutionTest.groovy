@@ -23,7 +23,7 @@ class ToolExecutionTest {
         def tool = new JipDSL().evaluateToolDefinition(tools).getTools().get("touch")
         def dir = Files.createTempDir()
         try{
-            tool.run(dir, [input: "testfile"])
+            tool.run(dir, [input: "testfile"], null)
             assert new File(dir, "testfile").exists()
         }finally {
             "rm -Rf ${dir.absolutePath}".execute().waitFor()
@@ -61,7 +61,7 @@ class ToolExecutionTest {
         def tool = new JipDSL().evaluateToolDefinition(tools).getTools().get("pipe")
         def dir = Files.createTempDir()
         try{
-            tool.run(dir, [:])
+            tool.run(dir, [:], null)
             assert new File(dir, "count-out.txt").exists()
             assert new File(dir, "count-out.txt").text.trim() == "1\n2\n3"
         }finally {
@@ -93,7 +93,7 @@ class ToolExecutionTest {
         def tool = new JipDSL().evaluateToolDefinition(tools).getTools().get("pipe")
         def dir = Files.createTempDir()
         try{
-            tool.run(dir, [:])
+            tool.run(dir, [:], null)
             assert new File(dir, "count-out.txt").exists()
             assert new File(dir, "count-out.txt").text.trim() == "1.touched\n2.touched\n3.touched"
         }finally {
@@ -126,7 +126,7 @@ class ToolExecutionTest {
         def tool = dsl.evaluateToolDefinition(tools).getTools().get("pipe")
         def dir = Files.createTempDir()
         try{
-            tool.run(dir, [:])
+            tool.run(dir, [:], null)
             assert new File(dir, "create-out.txt").exists()
             assert new File(dir, "count-out.txt").exists()
             assert new File(dir, "count-out.txt").text.trim() == "2"
@@ -159,7 +159,7 @@ class ToolExecutionTest {
         def tool = dsl.evaluateToolDefinition(tools).getTools().get("pipe")
         def dir = Files.createTempDir()
         try{
-            tool.run(dir, [:])
+            tool.run(dir, [:], null)
             assert new File(dir, "count-out.txt").exists()
             assert new File(dir, "count-out.txt").text.trim() == "2"
         }finally {

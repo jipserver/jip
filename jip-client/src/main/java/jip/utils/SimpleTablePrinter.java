@@ -89,11 +89,13 @@ public class SimpleTablePrinter {
      */
     protected void updateColumnsWidths(final List elements) {
         for (int i = 0; i < columnWidths.length; i++) {
-            Object s = elements.get(i);
-            if(s == null){
-                s = "";
+            if(i < elements.size()){
+                Object s = elements.get(i);
+                if(s == null){
+                    s = "";
+                }
+                columnWidths[i] = Math.max(columnWidths[i], s.toString().length());
             }
-            columnWidths[i] = Math.max(columnWidths[i], s.toString().length());
         }
     }
 
@@ -157,7 +159,10 @@ public class SimpleTablePrinter {
                 b.append("| ");
             }
             for (int i = 0; i < columnWidths.length; i++) {
-                Object o = row.get(i);
+                Object o = "";
+                if(row.size() > i){
+                    o = row.get(i);
+                }
                 String s = o == null ? ""  : o.toString();
                 b.append(String.format("%-"+Math.max(SPACE, columnWidths[i])+"s" + (printBorders ? " | " : ""), s));
             }

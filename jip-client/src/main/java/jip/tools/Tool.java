@@ -1,6 +1,7 @@
 package jip.tools;
 
 import groovy.lang.Closure;
+import jip.jobs.Job;
 import jip.plugin.ExtensionPoint;
 
 import java.io.File;
@@ -40,9 +41,10 @@ public interface Tool {
      *
      * @param workingDir working directory
      * @param cfg run configuration
+     * @param job (optional) job
      * @throws Exception in case of an exception
      */
-    void run(File workingDir, Map cfg) throws Exception;
+    void run(File workingDir, Map cfg, Job job) throws Exception;
 
     /**
      * Get map of tool parameter

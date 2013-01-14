@@ -2,6 +2,7 @@ package jip.jobs;
 
 import com.google.inject.Inject;
 import jip.cluster.Cluster;
+import jip.cluster.ClusterJobState;
 import jip.cluster.ClusterService;
 import jip.tools.Tool;
 import jip.tools.ToolService;
@@ -55,7 +56,7 @@ public class DefaultRunService implements RunService{
             jobStore.setState(job.getPipelineId(), job.getId(), JobState.Running, null);
         }
         try {
-            jobTool.run(new File(job.getWorkingDirectory()), job.getConfiguration());
+            jobTool.run(new File(job.getWorkingDirectory()), job.getConfiguration(), job);
             jobStore.setState(job.getPipelineId(), job.getId(), JobState.Done, null);
         } catch (Exception e) {
             log.error("Job execution for {}-{} failed : {}", new Object[]{job.getPipelineId(), job.getId(), e.getMessage()});
@@ -130,6 +131,45 @@ public class DefaultRunService implements RunService{
                 }
                 jobStore.setState(j.getPipelineId(), j.getId(), JobState.Canceled, null);
             }
+        }
+    }
+
+    @Override
+    public void checkJobs() {
+        log.info("Checking job status");
+        Cluster cluster = clusterService.getDefault();
+        try {
+            Map<String,ClusterJobState> states = cluster.list();
+            log.debug("Job states : {}", states);
+            for (PipelineJob pipelineJob : jobStore.list(false)) {
+                for (Job job : pipelineJob.getJobs()) {
+                    if(!job.getState().isDoneState()){
+                        log.info("Checking state for {}-{}", pipelineJob.getId(), job.getId());
+                        if(!states.containsKey(job.getRemoteId()) || !states.get(job.getRemoteId()).isExecutionState()){
+                            log.info("Updating state for {}-{}", pipelineJob.getId(), job.getId());
+                            // job is not running any more
+                            if(!states.containsKey(job.getRemoteId())){
+                                // out of list, assume failed!
+                                jobStore.setState(job.getPipelineId(), job.getId(), JobState.Failed, "");
+                            }else{
+                                switch (states.get(job.getRemoteId())){
+                                    case Canceled:
+                                        jobStore.setState(job.getPipelineId(), job.getId(), JobState.Canceled, "");
+                                        break;
+                                    case Done:
+                                        jobStore.setState(job.getPipelineId(), job.getId(), JobState.Done, "");
+                                        break;
+                                    case Error:
+                                        jobStore.setState(job.getPipelineId(), job.getId(), JobState.Failed, "");
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed checking job status on cluster", e);
         }
     }
 }

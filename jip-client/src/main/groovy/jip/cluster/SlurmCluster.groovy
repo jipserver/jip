@@ -120,7 +120,9 @@ class SlurmCluster implements Cluster{
 
     @Override
     Map<String, ClusterJobState> list() throws Exception{
-        def output = """${squeue} -h -o "%i %T %N %l %S""".execute()
+        def cmd = [squeue, "-h", "-o",  "%i %T %N %l %S"]
+        log.debug("Calling squeue with : {}", cmd)
+        def output = cmd.execute()
         def result = parseSqueueOutput(output.inputStream)
         if (output.waitFor() != 0) {
             throw new RuntimeException("Slurm polling failed! Error Message: ${output.errorStream.text}");

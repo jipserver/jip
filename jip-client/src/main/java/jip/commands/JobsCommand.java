@@ -12,10 +12,7 @@ import net.sourceforge.argparse4j.inf.Subparser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static net.sourceforge.argparse4j.impl.Arguments.storeTrue;
 
@@ -64,6 +61,13 @@ public class JobsCommand implements JipCommand{
 
     @Override
     public void run(String[] args, Namespace parsed) {
+        if(parsed.getBoolean("check-jobs")){
+            log.info("Checking job status");
+            runService.checkJobs();
+            return;
+        }
+
+
         List<Object> jobIdList = parsed.getList("job");
         List<Object> deleteList = parsed.getList("delete");
         List<Object> cancelList = parsed.getList("cancel");
@@ -100,22 +104,41 @@ public class JobsCommand implements JipCommand{
                         pipelineJob.getId(),
                         pipelineJob.getName(),
                         state,
-                        counts.get(JobState.Done)+"/"+pipelineJob.getJobs().size()
-//                        getPipelineJobTime(pipelineJob, state),
-//                        getLastMessage(pipelineJob)
+                        counts.get(JobState.Done)+"/"+pipelineJob.getJobs().size(),
+                        getPipelineJobTime(pipelineJob, state),
+                        getLastMessage(pipelineJob)
                 );
             }
             System.out.println(jobTable.toString());
         }
     }
 
-    private void getPipelineJobTime(PipelineJob pipelineJob, JobState state) {
+    private String getLastMessage(PipelineJob pipelineJob) {
+        List<Message> messages = new ArrayList<Message>();
+        for (Job job : pipelineJob.getJobs()) {
+            messages.addAll(job.getMessages());
+        }
+        Collections.sort(messages);
+        if(messages.size() == 0) return "";
+        return messages.get(messages.size()-1).getMessage();
+    }
+
+    private String getPipelineJobTime(PipelineJob pipelineJob, JobState state) {
         long start = Long.MAX_VALUE;
         long end = System.currentTimeMillis()/1000;
         boolean useStart = state.isDoneState() || state == JobState.Running;
         for (Job job : pipelineJob.getJobs()) {
-            start = Math.min(start, (useStart ? job.getJobStats().getStartDate().getTime() : job.getJobStats().getCreateDate().getTime())/1000);
+            JobStats jobStats = job.getJobStats();
+            if(jobStats.getStartDate() != null){
+                start = Math.min(start, (useStart ? jobStats.getStartDate().getTime() : jobStats.getCreateDate().getTime())/1000);
+            }else{
+                start = jobStats.getCreateDate().getTime()/1000;
+            }
+            if(jobStats.getEndDate() != null){
+                end = jobStats.getEndDate().getTime()/1000;
+            }
         }
+        return new Time(end-start).toString();
     }
 
     private void showJobDetails(List<Long> jobIdList) {
@@ -226,5 +249,6 @@ public class JobsCommand implements JipCommand{
         parser.addArgument("-d", "--delete").dest("delete").nargs("*").type(String.class).help("Delete jobs");
         parser.addArgument("-c", "--cancel").dest("cancel").nargs("*").type(String.class).help("Cancel Jobs");
         parser.addArgument("--list-archived").dest("list-archived").action(storeTrue()).setDefault(false).help("List archived jobs");
+        parser.addArgument("--check").dest("check-jobs").action(storeTrue()).setDefault(false).help("Check remote jobs and perform cleanup");
     }
 }

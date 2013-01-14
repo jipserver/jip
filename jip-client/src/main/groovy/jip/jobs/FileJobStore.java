@@ -282,10 +282,37 @@ public class FileJobStore implements JobStore{
                     job1.getJobStats().setEndDate(new Date());
                 }
                 pipelineJob.saveAndRelease();
-                break;
+                return;
             }
         }
+        pipelineJob.release();
+    }
 
+    @Override
+    public void addMessage(String pipelineId, String jobId, MessageType type, String message) {
+        FileStoreJob pipelineJob = lock(pipelineId);
+        for (Job job1 : pipelineJob.getJobs()) {
+            if(job1.getId().equals(jobId)){
+                job1.getMessages().add(new DefaultMessage(new Date(), type, message));
+                pipelineJob.saveAndRelease();
+                return;
+            }
+        }
+        pipelineJob.release();
+
+    }
+
+    @Override
+    public void setProgress(String pipelineId, String jobId, int progress) {
+        FileStoreJob pipelineJob = lock(pipelineId);
+        for (Job job1 : pipelineJob.getJobs()) {
+            if(job1.getId().equals(jobId)){
+                job1.setProgress(progress);
+                pipelineJob.saveAndRelease();
+                return;
+            }
+        }
+        pipelineJob.release();
     }
 
     @Override
@@ -363,6 +390,22 @@ public class FileJobStore implements JobStore{
 
             }
 
+        }
+
+        public void release(){
+            if(lock == null || channel == null) return;
+            // Release the lock
+            if (rw != null) {
+                try {rw.close();} catch (IOException ignore) {}
+            }
+            // Release the lock
+            if (lock != null) {
+                try {lock.release();} catch (IOException ignore) {}
+            }
+            // Close the file
+            if (channel != null) {
+                try {channel.close();} catch (IOException ignore) {}
+            }
         }
 
     }

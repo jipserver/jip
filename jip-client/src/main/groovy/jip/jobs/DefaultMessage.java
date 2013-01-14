@@ -25,7 +25,7 @@ public class DefaultMessage implements Message{
     }
 
     public DefaultMessage(Map data) {
-        createDate = new Date((Long) data.get("createDate"));
+        createDate = new Date(((Number) data.get("createDate")).longValue());
         type = MessageType.valueOf((String) data.get("type"));
         message = (String) data.get("message");
     }

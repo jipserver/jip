@@ -4,6 +4,7 @@ import groovy.lang.Closure;
 import jip.dsl.JipDSL;
 import jip.dsl.JipDSLContext;
 import jip.graph.*;
+import jip.jobs.Job;
 import jip.utils.ExecuteDelegate;
 
 import java.io.File;
@@ -62,15 +63,16 @@ public class DefaultTool implements Tool {
         return description;
     }
 
+
     @Override
-    public void run(File cwd, Map cfg) throws Exception {
+    public void run(File cwd, Map cfg, Job job) throws Exception {
         // make file paths absolute
         if(cfg != null && cfg.size() > 0){
             if(cwd == null) cwd = new File(".");
             cfg = absoluteFileParameter(cwd, cfg);
         }
         if(pipeline == null){
-            ExecuteDelegate delegate = new ExecuteDelegate(cwd, true);
+            ExecuteDelegate delegate = new ExecuteDelegate(cwd, true, job);
             delegate.setTemplateConfiguration(this, cfg);
             closure.setDelegate(delegate);
             closure.call(cfg);
@@ -88,7 +90,7 @@ public class DefaultTool implements Tool {
                 String tool = pipelineJob.getToolId();
                 Tool jobTool = context.getTools().get(tool);
                 if(jobTool == null) throw new NullPointerException("Tool " + tool + " not found");
-                jobTool.run(cwd, node.getConfiguration());
+                jobTool.run(cwd, node.getConfiguration(), job);
             }
         }
     }

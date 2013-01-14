@@ -63,4 +63,23 @@ public interface JobStore {
      * @param job the job
      */
     void save(Job job);
+
+    /**
+     * Add a message to a job
+     *
+     * @param pipelineId the pipeline id
+     * @param jobId the job id
+     * @param type the message type
+     * @param message the message
+     */
+    void addMessage(String pipelineId, String jobId, MessageType type, String message);
+
+    /**
+     * Set job progress
+     *
+     * @param pipelineId the pipeline id
+     * @param jobId the job id
+     * @param progress the current progress
+     */
+    void setProgress(String pipelineId, String jobId, int progress);
 }

@@ -55,6 +55,11 @@ public class DefaultJobStats implements JobStats {
         this.endDate = endDate;
     }
 
+    @Override
+    public String toString() {
+        return "Job Stats\n\tCreate: " + createDate + "\n\tStart: " + startDate + "\n\tEnd: " + endDate;
+    }
+
     public static Map<String, Object> toMap(JobStats stats){
         HashMap<String, Object> map = new HashMap<String, Object>();
         map.put("createDate", stats.getCreateDate().getTime());
